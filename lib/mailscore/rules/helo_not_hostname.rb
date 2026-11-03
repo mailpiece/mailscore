@@ -6,7 +6,7 @@ module MailScore
     class HeloNotHostname < Rule
       NAME = "HELO_HOSTNAME_MISMATCH"
       WEIGHT = 0.3
-      DESCRIPTION = "HELO does not match the sending server's host name"
+      DESCRIPTION = "Server greeting does not match its host name"
 
       def run(_message, envelope)
         return if envelope.trusted? || !envelope.helo.to_s.chomp(".").match?(HeloNotFqdn::FQDN)

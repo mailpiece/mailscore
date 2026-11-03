@@ -10,8 +10,8 @@ module MailScore
     class Fasttext < Rule
       NAME = "FASTTEXT"
       SYMBOLS = {
-        "FASTTEXT_SPAM" => [ 3.0, "The fastText model says spam" ],
-        "FASTTEXT_HAM" => [ -2.0, "The fastText model says ham" ]
+        "FASTTEXT_SPAM" => [ 3.0, "Trained model says spam" ],
+        "FASTTEXT_HAM" => [ -2.0, "Trained model says not spam" ]
       }.freeze
       DEAD_ZONE = 0.05
 

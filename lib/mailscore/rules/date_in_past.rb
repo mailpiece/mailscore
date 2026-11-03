@@ -4,7 +4,7 @@ module MailScore
     class DateInPast < Rule
       NAME = "DATE_TOO_OLD"
       WEIGHT = 1.0
-      DESCRIPTION = "Date header is far in the past"
+      DESCRIPTION = "Date header far in the past"
 
       def initialize(config, database, now: Time.now)
         super(config, database)

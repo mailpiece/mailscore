@@ -4,7 +4,7 @@ module MailScore
     class HtmlMetaRefreshUrl < Rule
       NAME = "HTML_AUTO_REDIRECT"
       WEIGHT = 5.0
-      DESCRIPTION = "The HTML redirects to a link by itself (meta refresh)"
+      DESCRIPTION = "HTML redirects to a link on opening"
 
       def run(message, _envelope)
         tag = message.content.html.flat_map(&:tags).find do |tag|

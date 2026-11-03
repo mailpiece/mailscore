@@ -4,7 +4,7 @@ module MailScore
     class MimeBase64TextBogus < Rule
       NAME = "TEXT_IN_BASE64"
       WEIGHT = 1.0
-      DESCRIPTION = "ASCII text part encoded in base64"
+      DESCRIPTION = "Plain text needlessly encoded in base64"
 
       def run(message, _envelope)
         if (part = message.content.text_parts.find { it.encoding == "base64" && it.text.ascii_only? && it.text.match?(/\S/) })

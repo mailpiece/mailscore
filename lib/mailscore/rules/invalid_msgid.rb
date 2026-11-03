@@ -5,7 +5,7 @@ module MailScore
     class InvalidMsgid < Rule
       NAME = "MESSAGE_ID_INVALID"
       WEIGHT = 1.7
-      DESCRIPTION = "Message-ID is malformed"
+      DESCRIPTION = "Malformed Message-ID header"
 
       MSGID = /\A<?[^<>\\ \t\r\n\v\u0080-\u{10ffff}]+@[^<>\\ \t\r\n\v\u0080-\u{10ffff}]+>?\s*\z/
       COMMENT = /\(.*\)/

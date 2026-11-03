@@ -4,7 +4,7 @@ module MailScore
     class HttpToIp < Rule
       NAME = "LINK_TO_IP_ADDRESS"
       WEIGHT = 1.0
-      DESCRIPTION = "A link to a bare IP address"
+      DESCRIPTION = "Link to an IP address"
 
       def run(message, _envelope)
         if (url = message.content.urls.find(&:ip?))

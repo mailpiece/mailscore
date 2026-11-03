@@ -4,7 +4,7 @@ module MailScore
     class MimeBadExtension < Rule
       NAME = "ATTACHMENT_RISKY_EXTENSION"
       WEIGHT = 2.0
-      DESCRIPTION = "Attachment with a risky file extension"
+      DESCRIPTION = "Risky attachment type"
 
       EXTENSIONS = %w[
         ace ade adp app arj asp asx bas bat cab chm cmd cnt com cpl csh diagcab docm exe fxp gadget grp hlp hpj hta htm

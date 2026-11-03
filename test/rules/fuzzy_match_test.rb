@@ -55,6 +55,16 @@ class MailScore::Rules::FuzzyMatchTest < MailScore::TestCase
     assert_equal [ "FUZZY_SPAM" ], JSON.parse(response.body)["symbols"].map { it["name"] }
   end
 
+  def test_check_describes_a_configured_flag_as_symbols_does
+    flags = { "phish" => { "symbol" => "FUZZY_PHISH", "weight" => 8.5 } }
+    config = MailScore::Config.parse(SETTINGS.merge("fuzzy_flags" => flags), env: TOKENS)
+    MailScore::Fuzzy.new(config, @database).add(mail(OFFER), "phish")
+    app = MailScore::App.new(config, database: @database, rules: [ MailScore::Rules::FuzzyMatch ])
+    response = Rack::MockRequest.new(app).post("/check", "HTTP_AUTHORIZATION" => "Bearer read-token-000000000000000000000", input: "Subject: hello\n\n#{OFFER}")
+
+    assert_equal [ "Matches mail flagged phish" ], JSON.parse(response.body)["symbols"].map { it["description"] }
+  end
+
   def test_the_default_flags_list_the_default_symbols
     assert_equal MailScore::Rules::FuzzyMatch::SYMBOLS, MailScore::Rules::FuzzyMatch.symbols(@config)
   end
@@ -65,8 +75,8 @@ class MailScore::Rules::FuzzyMatchTest < MailScore::TestCase
     app = MailScore::App.new(config, database: @database, rules: [ MailScore::Rules::FuzzyMatch ])
     response = Rack::MockRequest.new(app).get("/symbols", "HTTP_AUTHORIZATION" => "Bearer read-token-000000000000000000000")
 
-    assert_equal [ { "name" => "FUZZY_SPAM", "weight" => 9, "description" => "Matches a fuzzy hash flagged spam" },
-      { "name" => "FUZZY_PHISH", "weight" => 8.5, "description" => "Matches a fuzzy hash flagged phish" } ],
+    assert_equal [ { "name" => "FUZZY_SPAM", "weight" => 9, "description" => "Matches known spam" },
+      { "name" => "FUZZY_PHISH", "weight" => 8.5, "description" => "Matches mail flagged phish" } ],
       JSON.parse(response.body).select { it["name"].start_with?("FUZZY_") }
   end
 

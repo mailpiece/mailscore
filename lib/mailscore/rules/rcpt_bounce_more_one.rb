@@ -5,7 +5,7 @@ module MailScore
     class RcptBounceMoreOne < Rule
       NAME = "BOUNCE_MANY_RECIPIENTS"
       WEIGHT = 1.5
-      DESCRIPTION = "Bounce to more than one recipient"
+      DESCRIPTION = "Bounce sent to several recipients"
 
       def run(_message, envelope)
         recipients = envelope.recipients.map(&:downcase).uniq

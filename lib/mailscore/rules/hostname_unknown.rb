@@ -6,7 +6,7 @@ module MailScore
     class HostnameUnknown < Rule
       NAME = "HOSTNAME_UNKNOWN"
       WEIGHT = 2.5
-      DESCRIPTION = "The sending server has no verified host name"
+      DESCRIPTION = "Sending server has no verified host name"
 
       def run(_message, envelope)
         Hit.new(name: NAME, weight: WEIGHT, detail: envelope.ip) if !envelope.trusted? && unknown?(envelope)

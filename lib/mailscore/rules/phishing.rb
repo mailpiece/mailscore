@@ -8,7 +8,7 @@ module MailScore
     class Phishing < Rule
       NAME = "LINK_TEXT_MISMATCH"
       WEIGHT = 4.0
-      DESCRIPTION = "Link text shows a different domain than the link goes to"
+      DESCRIPTION = "Link text names another site"
 
       TRAILING = /[.,;:!?'")\]}>]+\z/
       SHOWN = %r{\A((?:https?|ftp)://|www\.)?((?:[a-z0-9-]+\.)+[a-z]{2,24})([/:?#]\S*)?\z}i

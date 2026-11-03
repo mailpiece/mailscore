@@ -5,7 +5,7 @@ module MailScore
     class HeloNotFqdn < Rule
       NAME = "HELO_NOT_FULL_DOMAIN"
       WEIGHT = 2.0
-      DESCRIPTION = "HELO is not a fully qualified domain name"
+      DESCRIPTION = "Server greeted with an incomplete name"
 
       FQDN = /\A(?=.{1,253}\z)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?\z/i
 

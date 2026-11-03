@@ -4,7 +4,7 @@ module MailScore
     class MimeDoubleBadExtension < Rule
       NAME = "ATTACHMENT_DISGUISED_EXTENSION"
       WEIGHT = 3.0
-      DESCRIPTION = "Attachment with a risky extension behind a harmless one"
+      DESCRIPTION = "Attachment disguised behind a harmless extension"
 
       DECOYS = %w[ avi doc docx gif jpeg jpg mov mp3 mp4 odt pdf png ppt pptx rtf txt xls xlsx zip ].to_set.freeze
 

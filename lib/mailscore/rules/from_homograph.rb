@@ -4,7 +4,7 @@ module MailScore
     class FromHomograph < Rule
       NAME = "FROM_LOOKALIKE_DOMAIN"
       WEIGHT = 5.0
-      DESCRIPTION = "Sender domain mixes scripts or uses look-alike letters"
+      DESCRIPTION = "Sender domain uses look-alike letters"
 
       def run(message, envelope)
         domains = [ envelope.from, *message.from_addresses ].filter_map { it.to_s.rpartition("@").last.downcase.then { it unless it.empty? } }

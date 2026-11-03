@@ -7,7 +7,7 @@ module MailScore
     class Bounce < Rule
       NAME = "BOUNCE"
       WEIGHT = -0.1
-      DESCRIPTION = "Delivery status or disposition notification"
+      DESCRIPTION = "Delivery status or read receipt"
 
       REPORT_TYPES = %w[ delivery-status disposition-notification ].freeze
       SENDERS = %w[ postmaster mailer-daemon ].freeze

@@ -5,18 +5,18 @@ module MailScore
     # flag's weight at its +hits_limit+, and with the similarity, from none
     # at 0.5 to all of it at 1.0. SYMBOLS lists the default flags;
     # +fuzzy_flags+ sets the symbols, weights and hit limits that fire, and
-    # +symbols+ lists those.
+    # +symbols+ lists those, a default symbol with its own description.
     class FuzzyMatch < Rule
       NAME = "FUZZY"
 
       SYMBOLS = {
-        "FUZZY_SPAM" => [ 12.0, "Matches a fuzzy hash flagged spam" ],
-        "FUZZY_PROBABLE_SPAM" => [ 5.0, "Matches a fuzzy hash flagged prob" ],
-        "FUZZY_HAM" => [ -2.1, "Matches a fuzzy hash flagged ham" ]
+        "FUZZY_SPAM" => [ 12.0, "Matches known spam" ],
+        "FUZZY_PROBABLE_SPAM" => [ 5.0, "Matches probable spam" ],
+        "FUZZY_HAM" => [ -2.1, "Matches known good mail" ]
       }.freeze
 
       def self.symbols(config)
-        config.fuzzy_flags.to_h { |flag, setting| [ setting.symbol, [ setting.weight, "Matches a fuzzy hash flagged #{flag}" ] ] }
+        config.fuzzy_flags.to_h { |flag, setting| [ setting.symbol, [ setting.weight, SYMBOLS.dig(setting.symbol, 1) || "Matches mail flagged #{flag}" ] ] }
       end
 
       def run(message, _envelope)

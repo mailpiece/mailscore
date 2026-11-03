@@ -9,7 +9,7 @@ module MailScore
       NAME = "REVERSE_DNS"
 
       SYMBOLS = {
-        "REVERSE_DNS_NONE" => [ 2.0, "The sending server's IP has no reverse DNS" ],
+        "REVERSE_DNS_NONE" => [ 2.0, "No reverse DNS for the sending server" ],
         "REVERSE_DNS_LOOKUP_FAILED" => [ 0.0, "Reverse DNS lookup failed" ]
       }.freeze
 

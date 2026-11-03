@@ -8,8 +8,8 @@ module MailScore
     class Bayes < Rule
       NAME = "BAYES"
       SYMBOLS = {
-        "BAYES_SPAM" => [ 5.1, "The Bayes classifier says spam" ],
-        "BAYES_HAM" => [ -3.0, "The Bayes classifier says ham" ]
+        "BAYES_SPAM" => [ 5.1, "Learned filter says spam" ],
+        "BAYES_HAM" => [ -3.0, "Learned filter says not spam" ]
       }.freeze
       DEAD_ZONE = 0.05
 

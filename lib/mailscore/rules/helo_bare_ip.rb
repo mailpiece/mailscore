@@ -8,7 +8,7 @@ module MailScore
     class HeloBareIp < Rule
       NAME = "HELO_IP_ADDRESS"
       WEIGHT = 3.0
-      DESCRIPTION = "HELO is an IP address"
+      DESCRIPTION = "Server greeted with an IP address"
 
       # Four numbers joined by dots, dashes or an x, such as 1-2-3-4.
       DOTTED = /\A\d+[x.-]\d+[x.-]\d+[x.-]\d+\z/i

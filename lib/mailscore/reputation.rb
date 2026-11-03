@@ -14,12 +14,12 @@ module MailScore
     NAME = "REPUTATION"
 
     SYMBOLS = {
-      "IP_REPUTATION_SPAM" => [ 3.0, "The sending IP mostly sent spam" ],
-      "IP_REPUTATION_HAM" => [ -1.0, "The sending IP mostly sent clean mail" ],
-      "DKIM_REPUTATION_SPAM" => [ 3.0, "The DKIM signers mostly sent spam" ],
-      "DKIM_REPUTATION_HAM" => [ -1.0, "The DKIM signers mostly sent clean mail" ],
-      "SPF_REPUTATION_SPAM" => [ 3.0, "The SPF record that passed mostly sent spam" ],
-      "SPF_REPUTATION_HAM" => [ -1.0, "The SPF record that passed mostly sent clean mail" ]
+      "IP_REPUTATION_SPAM" => [ 3.0, "Sending IP mostly sends spam" ],
+      "IP_REPUTATION_HAM" => [ -1.0, "Sending IP mostly sends good mail" ],
+      "DKIM_REPUTATION_SPAM" => [ 3.0, "DKIM signer mostly sends spam" ],
+      "DKIM_REPUTATION_HAM" => [ -1.0, "DKIM signer mostly sends good mail" ],
+      "SPF_REPUTATION_SPAM" => [ 3.0, "SPF record mostly passes spam" ],
+      "SPF_REPUTATION_HAM" => [ -1.0, "SPF record mostly passes good mail" ]
     }.freeze
 
     PREFIXES = { "ip" => "IP_REPUTATION", "asn" => "IP_REPUTATION", "country" => "IP_REPUTATION", "dkim" => "DKIM_REPUTATION", "spf" => "SPF_REPUTATION" }.freeze

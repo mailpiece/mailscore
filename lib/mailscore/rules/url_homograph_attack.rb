@@ -4,7 +4,7 @@ module MailScore
     class UrlHomographAttack < Rule
       NAME = "LINK_LOOKALIKE_DOMAIN"
       WEIGHT = 5.0
-      DESCRIPTION = "A link's host mixes scripts or uses look-alike letters"
+      DESCRIPTION = "Link uses look-alike letters"
 
       def run(message, _envelope)
         if (url = message.content.urls.find(&:homograph?))

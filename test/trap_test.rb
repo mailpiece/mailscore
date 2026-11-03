@@ -19,7 +19,7 @@ class MailScore::TrapTest < MailScore::TestCase
   def test_mail_to_a_trap_fires_trap_without_naming_it
     app = app(TRAPPING)
 
-    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0 } ], symbols(app, rcpt: "<trap@example.net>")
+    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" } ], symbols(app, rcpt: "<trap@example.net>")
     assert_empty symbols(app, rcpt: "<bob@example.net>")
   end
 
@@ -45,7 +45,7 @@ class MailScore::TrapTest < MailScore::TestCase
   def test_a_trap_beside_other_recipients_acts_when_allowed
     app = app(TRAPPING.merge("trap_allow_multiple_rcpts" => true))
 
-    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0 } ], symbols(app, rcpt: "<bob@example.net>, <trap@example.net>")
+    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" } ], symbols(app, rcpt: "<bob@example.net>, <trap@example.net>")
     assert_equal [ [ "spam", 10 ] ], @database.execute("SELECT flag, count FROM fuzzy_hashes")
     assert_equal [ [ "spam" ] ], @database.execute("SELECT class FROM bayes_learned")
     assert_equal 1, stats(app)["trap_hits"]

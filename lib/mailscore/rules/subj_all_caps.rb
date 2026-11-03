@@ -6,7 +6,7 @@ module MailScore
     class SubjAllCaps < Rule
       NAME = "SUBJECT_ALL_CAPS"
       WEIGHT = 3.0
-      DESCRIPTION = "Subject is in capitals"
+      DESCRIPTION = "Subject in capitals"
 
       LENGTH = 40
       REPLY = /\A(?:(?:Re|Fwd|Fw|Aw|Antwort|Sv):\s*)+(.+)\z/i
