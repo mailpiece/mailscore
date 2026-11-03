@@ -1,0 +1,13 @@
+# Findings the image scan accepts, each with a reason and a date it comes back.
+#
+# Trivy drops an entry once `expired_at` passes and reports the finding again, so an entry here
+# holds a vulnerability back for one review cycle, not forever. Re-check the reasoning on that date;
+# don't extend one without doing so.
+
+vulnerabilities:
+  - id: CVE-2026-33210
+    # json, fixed in 2.19.2. The ruby:4.0.9-slim base image ships json 2.18.0 as a Ruby *default*
+    # gem, and the scan reads that gemspec on disk. mailscore never loads it: the bundle pins json
+    # 3.1.0 (Gemfile.lock), and Bundler puts the bundled version first.
+    statement: "json 2.18.0 is a default gem in the Ruby base image; mailscore loads json 3.1.0 from its bundle. Revisit when the base image ships Ruby with json >= 2.19.2."
+    expired_at: 2027-02-03

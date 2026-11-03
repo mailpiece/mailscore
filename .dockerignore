@@ -1,0 +1,9 @@
+# An allowlist: only what the image runs, and the licence it ships under.
+*
+!Gemfile
+!Gemfile.lock
+!mailscore.gemspec
+!exe
+!lib
+!LICENSE
+!NOTICE

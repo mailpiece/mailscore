@@ -1,0 +1,71 @@
+# Every setting is optional: an empty file, or none, runs on these defaults.
+# Uncomment a line to change it. Where the default is empty or worked out at
+# start, the line shows an example instead.
+# database: /data/mailscore.sqlite3 # on the volume, with its WAL beside it
+# bind: 0.0.0.0                     # the address to listen on, :: for IPv6 too
+# port: 8080                        # the image's health check expects 8080
+# workers: 2                        # one per CPU
+# message_size_cap: 52428800        # bytes, 50 MB
+# scan_budget: 8                    # seconds
+# greylist_timeout: 300             # seconds before a retry passes
+# greylist_expiry: 86400            # seconds an entry lasts
+# actions:                          # a score, or off; one left out keeps its default
+#   greylist: 4
+#   add_header: 6
+#   rewrite_subject: off
+#   soft_reject: off
+#   reject: 15
+# regexp_timeout: 0.5               # seconds
+# database_busy_timeout: 5          # seconds
+# expire_every: 60                  # seconds
+# subject_template: "*** SPAM *** %s" # for rewrite subject
+# soft_reject_on_timeout: off       # soft reject past the budget, short of reject
+# date_future_margin: 7200          # seconds a Date may run ahead
+# date_past_margin: 86400           # seconds a Date may lag behind
+# local_networks: [ 10.0.0.0/8 ]    # loopback, private and link-local by default
+# bayes_min_learns: 200             # spam and ham learns each before Bayes answers
+# bayes_max_tokens: 1000000         # tokens kept, the least seen dropped past it
+# language_model: /data/lid.176.ftz # fastText lid.176.ftz for Bayes; all text is English without it
+# autolearn: off                    # learn from the verdict
+# autolearn_spam_score: 15          # learn spam at or above; above reject by default
+# autolearn_ham_score: 0            # learn ham at or below; below 0 by default
+# reputation_window: 2592000        # seconds over which the average score moves
+# reputation_min_count: 10          # messages before a selector scores
+# reputation_expiry: 864000         # seconds a selector unseen is kept
+# spf_reputation_exclusions: []     # SPF reputation keys not kept, see docs/api.md
+# asn_database: off                 # a GeoLite2-ASN .mmdb file for ASN reputation
+# country_database: off             # a GeoLite2-Country .mmdb file for country reputation
+# fuzzy_flags:                      # these three by default; hits_limit optional, 20
+#   spam: { symbol: FUZZY_SPAM, weight: 12, hits_limit: 20 }
+#   prob: { symbol: FUZZY_PROBABLE_SPAM, weight: 5, hits_limit: 10 }
+#   ham: { symbol: FUZZY_HAM, weight: -2.1, hits_limit: 2 }
+# fuzzy_expiry: 7776000             # seconds a fuzzy hash lasts
+# fuzzy_min_words: 64               # words a text part needs for shingles
+# fuzzy_threshold: 0.5              # share of shingles a match must exceed
+# fuzzy_min_attachment_size: 1024   # bytes a part needs to be hashed, a short text a quarter
+# trap_addresses: [ trap@example.com ] # none by default, addresses only spammers write to
+# trap_fuzzy_flag: off              # a fuzzy flag to add trapped mail under
+# trap_learn_spam: off              # learn trapped mail as spam
+# trap_allow_multiple_rcpts: off    # let a trap act beside other recipients
+# dnsbl:                            # none by default; DNS lists for the client IP, see dns-lists.md
+#   - zone: zen.spamhaus.org
+#     symbol: SPAMHAUS
+#     weight: 0
+#     returncodes:
+#       SPAMHAUS_SPAM_SOURCE: { weight: 4.0, codes: [ 127.0.0.2 ] }
+# uribl:                            # none by default; DNS lists for URL and other domains, see dns-lists.md
+#   - zone: dbl.spamhaus.org
+#     symbol: SPAMHAUS_DOMAIN
+#     weight: 0
+#     no_ip: true
+#     returncodes:
+#       SPAMHAUS_DOMAIN_SPAM: { weight: 6.5, codes: [ 127.0.1.2 ] }
+# nameservers: [ unbound ]         # the system resolver by default; addresses or host names, see deploy.md
+# nameservers_refresh: 300          # seconds between lookups of the host names in nameservers
+# fasttext: off                     # keep the text of learned mail and score with a model trained on it
+# fasttext_model: /data/fasttext.bin # beside the database by default
+# fasttext_min_samples: 200         # samples of each class before a training
+# fasttext_max_samples: 5000        # samples kept per class, the newest
+# fasttext_sample_expiry: 7776000   # seconds a sample is kept after its learn
+# fasttext_train_every: 86400       # seconds between trainings
+# log_level: info                   # debug, info, warn or error

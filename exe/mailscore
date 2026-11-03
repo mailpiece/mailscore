@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+require "mailscore/server"
+
+abort "Usage: mailscore [CONFIG]" if ARGV.size > 1
+
+# Without an argument, /etc/mailscore.yml if there is one, or every default.
+path = ARGV.first || MailScore::Config::PATH.then { it if File.exist?(it) }
+
+begin
+  MailScore::Server.new(MailScore::Config.load(path)).run
+rescue MailScore::ConfigError => error
+  abort "mailscore: #{error.message}"
+end

@@ -1,0 +1,58 @@
+services:
+  mailscore:
+    image: ghcr.io/mailpiece/mailscore:0.1.0
+    depends_on:
+      - unbound
+    environment:
+      - MAILSCORE_READ_TOKEN
+      - MAILSCORE_WRITE_TOKEN
+    volumes:
+      - mailscore:/data                    # the database and its WAL
+      - ./mailscore.yml:/etc/mailscore.yml:ro # optional, the settings that differ
+    networks:
+      - mail
+    # For local testing only:
+    # ports:
+    #   - "127.0.0.1:8080:8080"
+
+    # Performance. Docker applies no limit if unspecified. Examples, not
+    # recommendations; see the performance flags in deploy.md to size them.
+    cpus: 2
+    mem_limit: 1g
+    memswap_limit: 1g                      # equal to mem_limit, or swap defeats the limit
+
+    # Security. Be cautious changing these, as that may impact security posture.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=256m # size is performance, the rest security
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "1000:1000"
+    pids_limit: 256
+    restart: unless-stopped
+
+  # A recursive resolver of your own, needed only for DNS lists queried
+  # without a key. mailscore asks it with nameservers: [ unbound ].
+  unbound:
+    image: klutchell/unbound:1.26.2
+    networks:
+      - mail
+    restart: unless-stopped
+
+  # Whatever calls mailscore.
+  app:
+    image: registry.example.com/app:<commit>
+    environment:
+      - MAILSCORE_URL=http://mailscore:8080
+      - MAILSCORE_READ_TOKEN
+      - MAILSCORE_WRITE_TOKEN
+    networks:
+      - mail
+
+networks:
+  mail:
+
+volumes:
+  mailscore:
