@@ -4,7 +4,7 @@ module MailScore
     class ZeroWidthSpaceUrl < Rule
       NAME = "LINK_ZERO_WIDTH_CHARACTER"
       WEIGHT = 7.0
-      DESCRIPTION = "An invisible zero-width character inside a link"
+      DESCRIPTION = "Hidden character in a link"
 
       ZERO_WIDTH = /[​-‍⁠﻿]/
 

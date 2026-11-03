@@ -12,7 +12,7 @@ mailscore ships as a container image. It listens on 8080 inside a private networ
 Each release publishes the image to `ghcr.io/mailpiece/mailscore`, for linux/amd64 and linux/arm64, tagged with its version:
 
 ```sh
-docker pull ghcr.io/mailpiece/mailscore:0.1.0
+docker pull ghcr.io/mailpiece/mailscore:0.1.1
 ```
 
 Pin the exact version, as the examples below do, and never `latest`, so a deploy runs the release you chose. A release is published only from a commit CI has passed, and CI checks the image built from it: it boots read-only and answers `/ping`, carries no setuid or setgid binaries, and has no fixable High or Critical vulnerability. Every CI run builds the image and keeps a CycloneDX SBOM of it as a workflow artifact.
@@ -32,10 +32,10 @@ The image runs `mailscore`, which reads `/etc/mailscore.yml` when one is mounted
 The release signs the image with cosign, keyless, and attests its build provenance on GitHub, both for the multi-arch manifest. Check both before you deploy a version:
 
 ```sh
-cosign verify ghcr.io/mailpiece/mailscore:0.1.0 \
+cosign verify ghcr.io/mailpiece/mailscore:0.1.1 \
   --certificate-identity-regexp 'github.com/mailpiece/mailscore/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
-gh attestation verify oci://ghcr.io/mailpiece/mailscore:0.1.0 --owner mailpiece
+gh attestation verify oci://ghcr.io/mailpiece/mailscore:0.1.1 --owner mailpiece
 ```
 
 ## Configuration
@@ -75,7 +75,7 @@ Run mailscore as an accessory of the app that calls it. Kamal is the main exampl
 # config/deploy.yml
 accessories:
   mailscore:
-    image: ghcr.io/mailpiece/mailscore:0.1.0
+    image: ghcr.io/mailpiece/mailscore:0.1.1
     host: mail.example.com
     files:
       - config/mailscore.yml:/etc/mailscore.yml # optional, the settings that differ
@@ -119,7 +119,7 @@ The same setup in Compose, also in [compose.example.yaml](compose.example.yaml).
 ```yaml
 services:
   mailscore:
-    image: ghcr.io/mailpiece/mailscore:0.1.0
+    image: ghcr.io/mailpiece/mailscore:0.1.1
     depends_on:
       - unbound
     environment:

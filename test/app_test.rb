@@ -75,7 +75,7 @@ class MailScore::AppTest < MailScore::TestCase
     symbols = JSON.parse(response.body)
 
     assert_equal({ "name" => "EXAMPLE", "weight" => 1.5, "description" => "Fires on example mail" }, symbols.first)
-    assert_equal({ "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "The scan failed before it finished" }, symbols.last)
+    assert_equal({ "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "Scan failed" }, symbols.last)
     assert_equal [ "EXAMPLE", *MailScore::Limits::SYMBOLS.keys, *MailScore::Reputation::SYMBOLS.keys, "GREYLISTED", *MailScore::Scanner::SYMBOLS.keys ], symbols.map { it["name"] }
   end
 
@@ -136,8 +136,20 @@ class MailScore::AppTest < MailScore::TestCase
 
     assert_equal 200, response.status
     assert_equal({ "action" => "no action", "score" => 1.5, "complete" => true,
-      "symbols" => [ { "name" => "EXAMPLE", "weight" => 1.5, "detail" => "<> to a@example.net b@example.net" } ] }, JSON.parse(response.body))
+      "symbols" => [ { "name" => "EXAMPLE", "weight" => 1.5, "detail" => "<> to a@example.net b@example.net", "description" => "Fires on example mail" } ] },
+      JSON.parse(response.body))
     assert_equal 1, JSON.parse(get("/stats").body)["scans_no_action"]
+  end
+
+  def test_check_gives_each_symbol_its_description_from_symbols
+    config = MailScore::Config.parse(SETTINGS.merge("actions" => SETTINGS["actions"].merge("greylist" => 1)), env: TOKENS)
+    @app = MailScore::App.new(config, database: @database, rules: [ ExampleRule ])
+    symbols = JSON.parse(check("Subject: an example\n\nbody").body)["symbols"]
+    descriptions = JSON.parse(get("/symbols").body).to_h { [ it["name"], it["description"] ] }
+
+    assert_equal [ [ "EXAMPLE", "Fires on example mail" ], [ "GREYLISTED", "Held for a retry" ] ], symbols.map { [ it["name"], it["description"] ] }
+    assert_equal descriptions.values_at("EXAMPLE", "GREYLISTED"), symbols.map { it["description"] }
+    assert_equal %w[ name weight detail description ], symbols.first.keys
   end
 
   def test_check_logs_one_line_without_the_message
@@ -166,7 +178,7 @@ class MailScore::AppTest < MailScore::TestCase
     answer = JSON.parse(check("Subject: an example\n\nbody", "HTTP_IP" => "203.0.113.9", "HTTP_FROM" => "a@example.org", "HTTP_RCPT" => "b@example.net").body)
 
     assert_equal "soft reject", answer["action"]
-    assert_equal({ "name" => "GREYLISTED", "weight" => 0, "detail" => "greylisted" }, answer["symbols"].last)
+    assert_equal({ "name" => "GREYLISTED", "weight" => 0, "detail" => "greylisted", "description" => "Held for a retry" }, answer["symbols"].last)
     assert_equal({ "code" => 451, "enhanced" => "4.7.1", "text" => "Try again later" }, answer["smtp_reply"])
     assert_equal [ [ 2 ] ], @database.execute("SELECT count(*) FROM greylist")
   end
@@ -328,7 +340,7 @@ class MailScore::AppTest < MailScore::TestCase
     response = check("Subject: an example\n\nbody", "HTTP_QUEUE_ID" => "4Xk2Lq0Rz9")
 
     assert_equal 200, response.status
-    assert_equal({ "action" => "no action", "score" => 3.0, "complete" => false, "symbols" => [ { "name" => "SCAN_ERROR", "weight" => 3.0 } ] },
+    assert_equal({ "action" => "no action", "score" => 3.0, "complete" => false, "symbols" => [ { "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "Scan failed" } ] },
       JSON.parse(response.body))
     assert_match "ERROR -- : scan raised ArgumentError queue_id=4Xk2Lq0Rz9", log
     refute_match "secret", log

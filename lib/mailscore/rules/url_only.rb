@@ -4,7 +4,7 @@ module MailScore
     class UrlOnly < Rule
       NAME = "LINK_ONLY"
       WEIGHT = 2.2
-      DESCRIPTION = "One link and very little text"
+      DESCRIPTION = "The message is only a link"
 
       WORDS = 8
       WORD = /[\p{L}\p{N}]+/

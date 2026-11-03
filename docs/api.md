@@ -60,13 +60,13 @@ Response, one verdict for the message:
   "action": "add header",
   "score": 7.1,
   "complete": true,
-  "symbols": [ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "detail": "203.0.113.9" } ]
+  "symbols": [ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "detail": "203.0.113.9", "description": "Sending server has no verified host name" } ]
 }
 ```
 
 - `score` is the sum of the fired symbols' weights.
 - Every score, weight and threshold is a float, such as `0.0` or `12.0`, here and in `/symbols`, however the config writes it.
-- `symbols` lists every symbol that fired. `name` is a symbol from `/symbols`.
+- `symbols` lists every symbol that fired. `name` is a symbol from `/symbols`, `weight` what it added to the score, `detail`, when present, what it fired on, and `description` the one `/symbols` gives it.
 - `complete` is false when the scan ran past its budget. See [Timeout](#timeout).
 - `smtp_reply` (`code`, `enhanced`, `text`) is present with `soft reject` and `reject`, and mailscore always sends one that is well formed: `code` is a 4xx with `soft reject` and a 5xx with `reject`, `enhanced` is `class.subject.detail` with the same class digit, and `text` is printable ASCII with no CR or LF, at most 200 characters. The caller uses its own reply for one that is not.
 - Greylisting and `soft reject` send `451`, `4.7.1` and "Try again later". `reject` sends `554`, `5.7.1` and "Spam message rejected".
@@ -254,9 +254,9 @@ The flags are a setting, and these three are the default.
 ## `GET /ping`, `/health`, `/stats`, `/symbols`
 
 - `ping`: no token. `200` and `pong` as plain text, for container health checks.
-- `health`: read token. `200` and `{"status": "ok", "version": "0.1.0"}` when the database opens. `503` otherwise.
+- `health`: read token. `200` and `{"status": "ok", "version": "0.1.1"}` when the database opens. `503` otherwise.
 - `stats`: read token. Counters since start, such as scans per action, budget overruns, rule errors, scan errors, learns, autolearns and fuzzy matches. Never message content or addresses. Under `fasttext`, the model in place: its accuracy on held-out samples and the spam and ham samples it learned from, and the time of the last training, swapped in or not, as `{"trained_at": "2026-11-03T03:00:00Z", "accuracy": 0.97, "spam_samples": 4000, "ham_samples": 4000}`, with nulls before any.
-- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "..." } ]`.
+- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name" } ]`. A description is a short label, such as "No reverse DNS for the sending server".
 
 ## Errors
 

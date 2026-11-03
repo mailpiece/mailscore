@@ -7,10 +7,10 @@ module MailScore
     NAME = "LIMITS"
 
     SYMBOLS = {
-      "TOO_MANY_HEADERS" => [ 1.0, "More header fields than are read" ],
-      "TOO_MANY_PARTS" => [ 1.0, "More MIME parts than are read" ],
-      "TOO_MANY_ZIP_ENTRIES" => [ 0.0, "More zip entry names than are read" ],
-      "TOO_MANY_LINKS" => [ 0.0, "More links than are read, or more link domains than a DNS list is asked" ]
+      "TOO_MANY_HEADERS" => [ 1.0, "Too many headers to read" ],
+      "TOO_MANY_PARTS" => [ 1.0, "Too many parts to read" ],
+      "TOO_MANY_ZIP_ENTRIES" => [ 0.0, "Too many files in a zip" ],
+      "TOO_MANY_LINKS" => [ 0.0, "Too many links to check" ]
     }.freeze
 
     def self.hits(message)

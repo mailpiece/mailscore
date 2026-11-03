@@ -13,38 +13,38 @@ module MailScore
       ERROR = "AUTHENTICATION_ERROR"
 
       SYMBOLS = {
-        "SPF_PASS" => [ -0.2, "SPF allows the sending server" ],
-        "SPF_FAIL" => [ 1.0, "SPF forbids the sending server" ],
-        "SPF_SOFTFAIL" => [ 0.0, "SPF discourages the sending server" ],
-        "SPF_NEUTRAL" => [ 0.0, "SPF says nothing about the sending server" ],
-        "SPF_NONE" => [ 0.0, "The sender's domain has no SPF record" ],
+        "SPF_PASS" => [ -0.2, "SPF passed" ],
+        "SPF_FAIL" => [ 1.0, "SPF failed" ],
+        "SPF_SOFTFAIL" => [ 0.0, "SPF soft-failed" ],
+        "SPF_NEUTRAL" => [ 0.0, "SPF neither allows nor forbids the server" ],
+        "SPF_NONE" => [ 0.0, "No SPF record" ],
         "SPF_LOOKUP_FAILED" => [ 0.0, "SPF lookup failed" ],
-        "SPF_INVALID" => [ 0.0, "SPF record is broken" ],
-        "SPF_ALLOWS_ANYONE" => [ 4.0, "The SPF record lets any server send for the domain" ],
-        "DKIM_PASS" => [ -0.1, "A DKIM signature verifies" ],
-        "DKIM_FAIL" => [ 1.0, "DKIM signature does not verify" ],
+        "SPF_INVALID" => [ 0.0, "Broken SPF record" ],
+        "SPF_ALLOWS_ANYONE" => [ 4.0, "SPF record lets anyone send" ],
+        "DKIM_PASS" => [ -0.1, "DKIM signature valid" ],
+        "DKIM_FAIL" => [ 1.0, "DKIM signature failed" ],
         "DKIM_LOOKUP_FAILED" => [ 0.0, "DKIM key lookup failed" ],
-        "DKIM_INVALID" => [ 0.0, "DKIM signature or key is broken" ],
+        "DKIM_INVALID" => [ 0.0, "Broken DKIM signature or key" ],
         "DKIM_NONE" => [ 0.0, "No DKIM signature" ],
-        "DKIM_PARTIAL_BODY" => [ 0.5, "A DKIM signature verifies, but covers only part of the body" ],
-        "DMARC_PASS" => [ -0.5, "DMARC passes" ],
+        "DKIM_PARTIAL_BODY" => [ 0.5, "DKIM signs only part of the body" ],
+        "DMARC_PASS" => [ -0.5, "DMARC passed" ],
         # A spoof still reaches greylist under p=reject past every credit a
         # sender can earn for itself: SPF and DKIM passes for its own domain,
         # its own ARC seal and a bounce.
-        "DMARC_FAIL_REJECT_POLICY" => [ 5.5, "DMARC fails, and the domain asks for rejection (p=reject)" ],
-        "DMARC_FAIL_QUARANTINE_POLICY" => [ 4.0, "DMARC fails, and the domain asks for quarantine (p=quarantine, or p=reject outside pct)" ],
-        "DMARC_FAIL_NONE_POLICY" => [ 0.1, "DMARC fails, but the domain only monitors (p=none)" ],
-        "DMARC_NONE" => [ 0.0, "The sender's domain has no DMARC record" ],
+        "DMARC_FAIL_REJECT_POLICY" => [ 5.5, "DMARC failed under a reject policy" ],
+        "DMARC_FAIL_QUARANTINE_POLICY" => [ 4.0, "DMARC failed under a quarantine policy" ],
+        "DMARC_FAIL_NONE_POLICY" => [ 0.1, "DMARC failed under a monitoring policy" ],
+        "DMARC_NONE" => [ 0.0, "No DMARC record" ],
         # One From field with no single domain DMARC can check, such as an
         # address only in a quoted name: honest mail never sends one, and it
         # shows a reader a sender no check can hold to account, so it weighs
         # just under FROM_MULTIPLE_ADDRESSES (8.0), which shows several.
         # Several addresses are FROM_MULTIPLE_ADDRESSES, none FROM_MISSING.
-        "FROM_UNREADABLE" => [ 7.5, "From names no single domain for DMARC to check" ],
+        "FROM_UNREADABLE" => [ 7.5, "From has no checkable domain" ],
         "DMARC_LOOKUP_FAILED" => [ 0.0, "DMARC lookup failed" ],
-        "ARC_PASS" => [ -1.0, "The forwarding chain (ARC) is intact" ],
-        "ARC_FAIL" => [ 1.0, "The forwarding chain (ARC) is broken" ],
-        "ARC_INVALID" => [ 0.5, "ARC headers are malformed" ],
+        "ARC_PASS" => [ -1.0, "ARC chain valid" ],
+        "ARC_FAIL" => [ 1.0, "ARC chain broken" ],
+        "ARC_INVALID" => [ 0.5, "Malformed ARC headers" ],
         "ARC_NONE" => [ 0.0, "No ARC chain" ],
         "AUTHENTICATION_ERROR" => [ 2.0, "SPF, DKIM, DMARC and ARC failed to run" ]
       }.freeze

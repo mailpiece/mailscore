@@ -6,7 +6,7 @@ module MailScore
     class DateInFuture < Rule
       NAME = "DATE_IN_FUTURE"
       WEIGHT = 4.0
-      DESCRIPTION = "Date header is in the future"
+      DESCRIPTION = "Date header in the future"
 
       def self.date(message)
         message.header("date")&.then { Time.rfc2822(it) }

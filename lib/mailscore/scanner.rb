@@ -1,6 +1,7 @@
 module MailScore
   # What /check answers for one message. +action+ is a config action name or
-  # "no_action".
+  # "no_action". Each symbol carries its description from +descriptions+,
+  # name to description, as /symbols lists them.
   Verdict = Data.define(:action, :score, :complete, :hits, :subject)
 
   class Verdict
@@ -9,8 +10,9 @@ module MailScore
       "reject" => { code: 554, enhanced: "5.7.1", text: "Spam message rejected" }
     }.freeze
 
-    def as_json
-      { action: action.tr("_", " "), score: score, complete: complete, symbols: hits.map { it.to_h.except(:data).compact } }.tap do |answer|
+    def as_json(descriptions = {})
+      symbols = hits.map { { **it.to_h.except(:data), description: descriptions[it.name] }.compact }
+      { action: action.tr("_", " "), score: score, complete: complete, symbols: }.tap do |answer|
         answer[:smtp_reply] = REPLIES[action] if REPLIES.key?(action)
         answer[:subject] = subject if action == "rewrite_subject"
       end
@@ -39,8 +41,8 @@ module MailScore
   class Scanner
     NAME = "SCANNER"
     SYMBOLS = {
-      "SCAN_TIMED_OUT" => [ 3.0, "The scan ran past its time budget, and the rules left were skipped" ],
-      "SCAN_ERROR" => [ 3.0, "The scan failed before it finished" ]
+      "SCAN_TIMED_OUT" => [ 3.0, "Scan ran out of time" ],
+      "SCAN_ERROR" => [ 3.0, "Scan failed" ]
     }.freeze
 
     def initialize(config, rules:, stats:, greylister: nil, reputation: nil, database: nil)

@@ -6,7 +6,7 @@ module MailScore
     class MultipleUniqueHeaders < Rule
       NAME = "UNIQUE_HEADER_REPEATED"
       WEIGHT = 7.0
-      DESCRIPTION = "A header that must be unique is repeated"
+      DESCRIPTION = "Repeated header that must appear once"
 
       FIELDS = {
         "Content-Type" => 1.0, "Content-Transfer-Encoding" => 1.0, "Date" => 0.1, "From" => 1.0, "Sender" => 1.0,

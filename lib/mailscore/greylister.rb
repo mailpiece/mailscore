@@ -9,7 +9,7 @@ module MailScore
   class Greylister
     NAME = "GREYLISTED"
     WEIGHT = 0.0
-    DESCRIPTION = "Held back until retried after the timeout"
+    DESCRIPTION = "Held for a retry"
     BODY_CAP = 10 * 1024
 
     # An entry past its expiry that the sweep has not deleted yet counts as gone.

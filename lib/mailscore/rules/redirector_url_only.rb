@@ -4,7 +4,7 @@ module MailScore
     class RedirectorUrlOnly < Rule
       NAME = "SHORTENED_LINK_ONLY"
       WEIGHT = 1.0
-      DESCRIPTION = "One shortened link and very little text"
+      DESCRIPTION = "The message is only a shortened link"
 
       SHORTENERS = %w[ 1url.com adf.ly amzn.to bit.do bit.ly clck.ru cli.gs dlvr.it fb.me goo.gl is.gd lnkd.in ow.ly su.pr t.co tiny.cc tinyurl.com tr.im wp.me ].freeze
 

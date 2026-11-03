@@ -4,7 +4,7 @@ module MailScore
     class InvalidDate < Rule
       NAME = "DATE_INVALID"
       WEIGHT = 1.5
-      DESCRIPTION = "Date header is malformed"
+      DESCRIPTION = "Malformed Date header"
 
       def run(message, _envelope)
         date = message.header("date").to_s

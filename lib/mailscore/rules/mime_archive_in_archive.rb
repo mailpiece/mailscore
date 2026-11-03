@@ -4,7 +4,7 @@ module MailScore
     class MimeArchiveInArchive < Rule
       NAME = "ATTACHMENT_NESTED_ARCHIVE"
       WEIGHT = 5.0
-      DESCRIPTION = "Zip attachment with an archive inside"
+      DESCRIPTION = "Archive inside a zip attachment"
 
       ARCHIVES = %w[ 7z ace alz arj bz2 cab egg lz rar xz zip ].to_set.freeze
 
