@@ -133,6 +133,9 @@ class MailScore::Rules::DnsListsClientTest < MailScore::TestCase
 
     run_rule("203.0.113.9", lists: [ zen.merge("requests_limit" => 2) ], headers:, dns: dns = MailResolver::Testing::FakeResolver.new)
     assert_equal 2, dns.queries.size
+
+    run_rule("203.0.113.9", lists: [ zen.merge("received_max_pos" => 2) ], headers:, dns: dns = MailResolver::Testing::FakeResolver.new)
+    assert_equal %w[ 1.0.51.198 2.0.51.198 ].map { "#{it}.zen.example" }, dns.queries.map(&:first)
   end
 
   def test_a_list_that_takes_local_networks_asks_about_local_relays_too

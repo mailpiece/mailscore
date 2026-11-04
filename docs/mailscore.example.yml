@@ -35,6 +35,8 @@
 # local_networks: [ 10.0.0.0/8 ]    # loopback, private and link-local by default
 # bayes_min_learns: 200             # spam and ham learns each before Bayes answers
 # bayes_max_tokens: 1000000         # tokens kept, the least seen dropped past it
+# bayes_min_tokens: 11              # tokens a message needs to be learned or classified; 0 for any
+# bayes_min_prob_strength: 0.05     # a token leaning less than this from even is dropped; 0 keeps all
 # language_model: /data/lid.176.ftz # fastText lid.176.ftz for Bayes; all text is English without it
 # autolearn: off                    # learn from the verdict
 # autolearn_spam_score: 15          # learn spam at or above; above reject by default
@@ -55,6 +57,7 @@
 # fuzzy_min_attachment_size: 1024   # bytes a part needs to be hashed, a short text a quarter
 # trap_addresses: [ trap@example.com ] # none by default, addresses only spammers write to
 # trap_fuzzy_flag: off              # a fuzzy flag to add trapped mail under
+# trap_fuzzy_weight: 10             # reports each trapped message adds to its hashes
 # trap_learn_spam: off              # learn trapped mail as spam
 # trap_allow_multiple_rcpts: off    # let a trap act beside other recipients
 # dnsbl:                            # none by default, recommended for a bundled set; DNS lists for the client IP, see dns-lists.md

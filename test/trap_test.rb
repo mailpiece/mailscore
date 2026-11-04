@@ -30,6 +30,12 @@ class MailScore::TrapTest < MailScore::TestCase
     assert_equal [ [ "spam" ] ], @database.execute("SELECT class FROM bayes_learned")
   end
 
+  def test_the_fuzzy_weight_can_be_set
+    check(app(TRAPPING.merge("trap_fuzzy_weight" => 3)), rcpt: "<trap@example.net>")
+
+    assert_equal [ [ "spam", 3 ] ], @database.execute("SELECT flag, count FROM fuzzy_hashes")
+  end
+
   def test_a_trap_beside_other_recipients_is_left_alone
     app = app(TRAPPING)
 

@@ -36,6 +36,7 @@ dnsbl:
     emails_domainonly: false        # optional, false; ask an address's domain, not the address
     dkim_domainonly: true           # optional, true; ask a DKIM signer's registrable domain
     requests_limit: 64              # optional, 64; URLs and addresses from the text asked per message
+    received_max_pos: 5             # optional, 5; Received headers from the top that received asks about
     prefixes: {}                    # optional, a symbol prefix for each check, see below
     # hash: sha1                    # optional, none; md5, sha1, sha256, sha384, sha512 or blake2
     # hash_format: hex              # optional, hex; base32 or base64 too
@@ -56,7 +57,7 @@ dnsbl:
 | Check | Asks about |
 |---|---|
 | `from` | the client IP, by its octets for IPv4 (`9.113.0.203.zen.spamhaus.org` for 203.0.113.9) or its nibbles for IPv6, reversed under the zone, if the zone takes that family |
-| `received` | each address the top five Received headers say a hop came from, at most `requests_limit`, reversed likewise: not one in the local networks, nor the client IP when the zone also checks `from`. The sender writes every header below those |
+| `received` | each address the top `received_max_pos` Received headers, five by default, say a hop came from, at most `requests_limit`, reversed likewise: not one in the local networks, nor the client IP when the zone also checks `from`. The sender writes every header below those |
 | `helo` | the HELO name, as sent |
 | `rdns` | the client's host name, from `Hostname` or mailscore's own lookup, unless `unknown` |
 | `urls`, `content_urls` | the URLs in the text parts and the Subject: the first of each registrable domain, those of links shown with text first and links without any last, at most `requests_limit`. Each by its registrable domain, or its whole host with `url_full_hostname`, or, for a URL to an address, its octets or nibbles reversed unless `no_ip` |
