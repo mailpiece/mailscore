@@ -1,0 +1,15 @@
+# Link wrappers trusted when link text names another site, a host a line,
+# each matching its subdomains too. Sources are credited in NOTICE.
+linkprotect.cudasvc.com
+list-manage.com
+mandrillapp.com
+mimecast.com
+mimecastprotect.com
+mjt.lu
+safelinks.protection.outlook.com
+secure-web.cisco.com
+sendgrid.net
+url.uk.m.mimecastprotect.com
+url.us.m.mimecastprotect.com
+urldefense.com
+urldefense.proofpoint.com

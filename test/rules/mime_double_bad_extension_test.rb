@@ -19,6 +19,6 @@ class MailScore::Rules::MimeDoubleBadExtensionTest < MailScore::TestCase
   private
     def run_rule(content_type)
       message = MailScore::Message.new("Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: #{content_type}\n\nx\n--b--\n")
-      MailScore::Rules::MimeDoubleBadExtension.new(nil, nil).run(message, MailScore::Envelope.read({}, message))
+      MailScore::Rules::MimeDoubleBadExtension.new(MailScore::Config.parse(SETTINGS, env: TOKENS), nil).run(message, MailScore::Envelope.read({}, message))
     end
 end

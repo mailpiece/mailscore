@@ -21,7 +21,7 @@ module MailScore
       private
         def double?(name)
           stem, extension = Content.split_name(name)
-          MimeBadExtension::EXTENSIONS.include?(extension) && DECOYS.include?(Content.extension(stem))
+          @config.risky_extensions.include?(extension) && DECOYS.include?(Content.extension(stem))
         end
     end
   end

@@ -23,7 +23,7 @@ class MailScore::Rules::MimeBadExtensionTest < MailScore::TestCase
 
     assert_equal [ "a", "invoice.pdf.exe" ], message.content.attachments.map(&:name)
     [ MailScore::Rules::MimeBadExtension, MailScore::Rules::MimeDoubleBadExtension ].each do |rule|
-      assert_equal "invoice.pdf.exe", rule.new(nil, nil).run(message, MailScore::Envelope.read({}, message))&.detail
+      assert_equal "invoice.pdf.exe", rule.new(MailScore::Config.parse(SETTINGS, env: TOKENS), nil).run(message, MailScore::Envelope.read({}, message))&.detail
     end
     assert_equal "exe", MailScore::Content.extension("evil\0.exe")
     assert_equal [ "évil.exe" ], MailScore::Content.zip_entries("PK\x03\x04".b + "\0" * 22 + [ 10 ].pack("v") + "\0\0" + "\xC3\xA9vil\0.exe".b)
@@ -34,13 +34,20 @@ class MailScore::Rules::MimeBadExtensionTest < MailScore::TestCase
     assert_nil run_rule("Content-Type: text/html\n\n<p>hi</p>")
   end
 
+  def test_a_risky_extensions_file_replaces_the_list
+    path = File.join(Dir.mktmpdir, "risky_extensions.txt").tap { File.write(it, "pdf\n") }
+
+    assert_equal "report.pdf", run_rule(attachment("application/pdf; name=report.pdf"), "risky_extensions" => path).detail
+    assert_nil run_rule(attachment("application/octet-stream; name=setup.exe"), "risky_extensions" => path)
+  end
+
   private
     def attachment(headers, body = "data")
       "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nsee attached\n--b\nContent-Type: #{headers}\n\n#{body}\n--b--\n"
     end
 
-    def run_rule(raw)
+    def run_rule(raw, settings = {})
       message = MailScore::Message.new(raw)
-      MailScore::Rules::MimeBadExtension.new(nil, nil).run(message, MailScore::Envelope.read({}, message))
+      MailScore::Rules::MimeBadExtension.new(MailScore::Config.parse(SETTINGS.merge(settings), env: TOKENS), nil).run(message, MailScore::Envelope.read({}, message))
     end
 end

@@ -13,7 +13,6 @@ module MailScore
 
       TRAILING = /[.,;:!?'")\]}>]+\z/
       SHOWN = %r{\A((?:https?|ftp)://|www\.)?((?:[a-z0-9-]+\.)+[a-z]{2,24})([/:?#]\S*)?\z}i
-      REDIRECTORS = %w[ linkprotect.cudasvc.com list-manage.com mandrillapp.com mimecast.com mimecastprotect.com mjt.lu safelinks.protection.outlook.com secure-web.cisco.com sendgrid.net urldefense.com urldefense.proofpoint.com ].freeze
       NESTING = 5
 
       def run(message, _envelope)
@@ -22,7 +21,7 @@ module MailScore
           target = Content::Url.parse(link.href) or next
           next unless target.scheme.match?(/\A(?:https?|ftp)?\z/)
 
-          unless same_name?(shown, target.host) || target.within?(REDIRECTORS + RedirectorUrlOnly::SHORTENERS) || wrapped(target)&.then { same_name?(shown, it.host) }
+          unless same_name?(shown, target.host) || trusted?(target) || wrapped(target)&.then { same_name?(shown, it.host) }
             return Hit.new(name: NAME, weight: WEIGHT, detail: "#{shown} links to #{target.host}")
           end
         end
@@ -31,6 +30,11 @@ module MailScore
       end
 
       private
+        # A link wrapper or shortener, which may lead anywhere.
+        def trusted?(url)
+          url.within?(@config.trusted_redirectors) || url.within?(@config.shorteners)
+        end
+
         def shown_host(text)
           address = text[/\A\S+/].to_s.sub(TRAILING, "")
           prefix, host, path = address.match(SHOWN)&.captures
