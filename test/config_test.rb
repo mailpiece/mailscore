@@ -11,7 +11,7 @@ class MailScore::ConfigTest < MailScore::TestCase
   LISTS = %w[ shorteners trusted_redirectors risky_extensions archive_extensions ].freeze
 
   def test_the_example_config_parses_and_lists_every_setting
-    assert_equal parse({}), MailScore::Config.load(EXAMPLE, env: TOKENS)
+    assert_equal without_lists(parse({})), without_lists(MailScore::Config.load(EXAMPLE, env: TOKENS))
 
     MailScore::Config.parse(example_settings.except(*LISTS), env: TOKENS)
     assert_equal MailScore::Config::KEYS.sort, example_settings.keys.sort
@@ -36,8 +36,8 @@ class MailScore::ConfigTest < MailScore::TestCase
   def test_an_empty_file_or_no_file_takes_every_default
     path = File.join(Dir.mktmpdir, "mailscore.yml").tap { File.write(it, "") }
 
-    assert_equal parse({}), MailScore::Config.load(path, env: TOKENS)
-    assert_equal parse({}), MailScore::Config.load(nil, env: TOKENS)
+    assert_equal without_lists(parse({})), without_lists(MailScore::Config.load(path, env: TOKENS))
+    assert_equal without_lists(parse({})), without_lists(MailScore::Config.load(nil, env: TOKENS))
   end
 
   def test_a_partial_actions_mapping_keeps_the_other_defaults
@@ -123,12 +123,19 @@ class MailScore::ConfigTest < MailScore::TestCase
 
     assert_includes parse(SETTINGS).shorteners, "bit.ly"
     assert_includes parse(SETTINGS).trusted_redirectors, "urldefense.com"
-    assert_equal [ 118, 11 ], parse(SETTINGS).then { [ it.risky_extensions.size, it.archive_extensions.size ] }
-    assert_equal [ "short.example", "go.example" ], parse(SETTINGS.merge("shorteners" => path)).shorteners.to_a
+    assert_includes parse(SETTINGS).risky_extensions, "exe"
+    assert_includes parse(SETTINGS).archive_extensions, "zip"
+
+    shorteners = parse(SETTINGS.merge("shorteners" => path)).shorteners
+    assert_includes shorteners, "short.example"
+    assert_includes shorteners, "go.example"
+    refute_includes shorteners, "bit.ly"
   end
 
   def test_a_list_must_be_a_readable_file
-    [ "/nonexistent/shorteners.txt", Dir.mktmpdir, 3 ].each do |value|
+    undecodable = File.join(Dir.mktmpdir, "shorteners.txt").tap { File.binwrite(it, "bit.ly\n\xff\n") }
+
+    [ "/nonexistent/shorteners.txt", Dir.mktmpdir, undecodable, 3 ].each do |value|
       assert_equal "shorteners must be a readable file", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("shorteners" => value)) }.message
     end
   end
@@ -417,6 +424,11 @@ class MailScore::ConfigTest < MailScore::TestCase
 
     def parse(settings, env: TOKENS)
       MailScore::Config.parse(settings, env: env)
+    end
+
+    # Each List read is its own, so configs compare past them.
+    def without_lists(config)
+      config.to_h.except(*LISTS.map(&:to_sym))
     end
 
     def with_actions(actions)

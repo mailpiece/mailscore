@@ -3,6 +3,7 @@ require "ipaddr"
 require "maxmind/db"
 require "yaml"
 require "mailscore/error"
+require "mailscore/list"
 require "mailscore/dns_list"
 require "mailscore/dns_list/parser"
 require "mailscore/dns_list/candidates"
@@ -22,7 +23,7 @@ module MailScore
   # of DnsList, empty by default. +nameservers+ lists addresses and host
   # names, or is nil for the system resolver. +language_model+ is a path, or
   # nil for none. +shorteners+, +trusted_redirectors+, +risky_extensions+ and
-  # +archive_extensions+ are sets read from a file, the bundled one by default.
+  # +archive_extensions+ are each a List, the bundled file by default.
   Config = Data.define(:database, :bind, :port, :workers, :message_size_cap, :scan_budget, :thresholds, :groups,
     :regexp_timeout, :database_busy_timeout, :expire_every, :subject_template, :soft_reject_on_timeout,
     :date_future_margin, :date_past_margin, :greylist_timeout, :greylist_expiry, :local_networks,
@@ -242,11 +243,10 @@ module MailScore
           raise ConfigError, "#{key} must be a MaxMind DB file or off"
         end
 
-        # A word a line, lowercased, past comments and blank lines.
         def list(value, key)
           raise ConfigError, "#{key} must be a readable file" unless value.is_a?(String)
-          File.readlines(value, chomp: true).filter_map { it.sub(/#.*/, "").split.first&.downcase }.to_set.freeze
-        rescue SystemCallError
+          List.new(value)
+        rescue SystemCallError, ArgumentError
           raise ConfigError, "#{key} must be a readable file"
         end
 

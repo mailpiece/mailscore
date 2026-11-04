@@ -6,6 +6,7 @@
 - Shorteners, trusted redirectors, risky and archive extensions are bundled files a setting replaces
 - The shorteners and trusted redirectors lists take the hosts of the sources credited in NOTICE
 - SHORTENED_LINK_ONLY fires on 247 shorteners, not 19, and LINK_TEXT_MISMATCH no longer on a link through one
+- A list file replaced at runtime is read again within 30 seconds
 
 ## 0.1.1
 
