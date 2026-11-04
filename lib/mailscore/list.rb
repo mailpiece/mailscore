@@ -2,7 +2,8 @@ module MailScore
   # A list file read as a set: a word a line, lowercased, past comments and
   # blank lines. It is read again once its stat changes, checked on use at
   # most every CHECK_EVERY seconds by each worker on its own. A file that
-  # goes missing or can't be read keeps the last list.
+  # goes missing or can't be read keeps the last list, and one just emptied
+  # is read a check later, past an editor's rewrite.
   class List
     CHECK_EVERY = 30
     CLOCK = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
@@ -13,7 +14,7 @@ module MailScore
     def initialize(path, clock: CLOCK)
       @path, @clock = path, clock
       @checked = clock.()
-      @stat = stat
+      @stat = @last_stat = stat
       @words = read
     end
 
@@ -30,19 +31,29 @@ module MailScore
       # The stat first, so a write during the read is read on the next check.
       def reload
         @checked = @clock.()
-        current = stat
+        previous = @last_stat
+        @last_stat = stat
 
-        if current != @stat
-          @words = read
-          @stat = current
-          MailScore.logger.info "list reloaded: #{@path}"
+        if @last_stat != @stat
+          if truncated_since?(previous)
+            MailScore.logger.info "list truncated, read on the next check: #{@path}"
+          else
+            @words = read
+            @stat = @last_stat
+            MailScore.logger.info "list reloaded: #{@path}"
+          end
         end
       rescue SystemCallError, ArgumentError => error
         MailScore.logger.warn "list reload failed, kept the last: #{@path}: #{error.message}"
       end
 
+      # A file just cut to nothing may be an editor still writing it.
+      def truncated_since?(previous)
+        @last_stat[:size].zero? && previous[:size].positive?
+      end
+
       def stat
-        File.stat(@path).then { |stat| STAT.map { stat.public_send(it) } }
+        File.stat(@path).then { |stat| STAT.to_h { [ it, stat.public_send(it) ] } }
       end
 
       def read

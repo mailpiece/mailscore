@@ -30,6 +30,26 @@ class MailScore::ListTest < MailScore::TestCase
     refute_includes @list, "bit.ly"
   end
 
+  def test_a_file_just_emptied_is_read_a_check_later
+    File.truncate(@path, 0)
+    @now = MailScore::List::CHECK_EVERY
+    assert_includes @list, "bit.ly"
+    assert_includes log, "list truncated, read on the next check: #{@path}"
+
+    @now *= 2
+    refute_includes @list, "bit.ly"
+  end
+
+  def test_a_file_emptied_then_written_skips_the_empty_list
+    File.truncate(@path, 0)
+    @now = MailScore::List::CHECK_EVERY
+    assert_includes @list, "bit.ly"
+
+    File.write(@path, "goo.gl\n")
+    @now *= 2
+    assert_includes @list, "goo.gl"
+  end
+
   def test_an_unchanged_file_is_not_read_again
     @now = MailScore::List::CHECK_EVERY
 
