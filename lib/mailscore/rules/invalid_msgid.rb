@@ -4,6 +4,7 @@ module MailScore
     # optional, or carries a comment.
     class InvalidMsgid < Rule
       NAME = "MESSAGE_ID_INVALID"
+      GROUP = "headers"
       WEIGHT = 1.7
       DESCRIPTION = "Malformed Message-ID header"
 

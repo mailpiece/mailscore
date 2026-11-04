@@ -4,6 +4,7 @@ module MailScore
     # reader may see one sender and a signature vouch for another.
     class MultipleFrom < Rule
       NAME = "FROM_MULTIPLE_ADDRESSES"
+      GROUP = "headers"
       WEIGHT = 8.0
       DESCRIPTION = "More than one address in From"
 

@@ -3,6 +3,7 @@ module MailScore
     # A URL host spelled with look-alike letters from another script.
     class UrlHomographAttack < Rule
       NAME = "LINK_LOOKALIKE_DOMAIN"
+      GROUP = "url"
       WEIGHT = 5.0
       DESCRIPTION = "Link uses look-alike letters"
 

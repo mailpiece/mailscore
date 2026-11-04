@@ -3,6 +3,7 @@ module MailScore
     # A zip holding another archive, a way to hide its payload from scanners.
     class MimeArchiveInArchive < Rule
       NAME = "ATTACHMENT_NESTED_ARCHIVE"
+      GROUP = "mime_types"
       WEIGHT = 5.0
       DESCRIPTION = "Archive inside a zip attachment"
 

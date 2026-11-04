@@ -15,13 +15,14 @@ module MailScore
   # Settings from a YAML file, each with a default, and tokens from ENV.
   # Weights and scores are floats, however written. +thresholds+ lists the
   # actions lowest first, with nil for one switched off. +local_networks+ is
-  # a list of IPAddr. +fuzzy_flags+ maps a flag name to a FuzzyFlag.
+  # a list of IPAddr. +groups+ maps a symbol group to its Group, of floats
+  # or nil. +fuzzy_flags+ maps a flag name to a FuzzyFlag.
   # +trap_addresses+ and +spf_reputation_exclusions+ are lowercase, and
   # +trap_fuzzy_flag+ is a fuzzy flag or nil. +dnsbl+ and +uribl+ are lists
   # of DnsList, empty by default. +nameservers+ lists addresses and host
   # names, or is nil for the system resolver. +language_model+ is a path, or
   # nil for none.
-  Config = Data.define(:database, :bind, :port, :workers, :message_size_cap, :scan_budget, :thresholds,
+  Config = Data.define(:database, :bind, :port, :workers, :message_size_cap, :scan_budget, :thresholds, :groups,
     :regexp_timeout, :database_busy_timeout, :expire_every, :subject_template, :soft_reject_on_timeout,
     :date_future_margin, :date_past_margin, :greylist_timeout, :greylist_expiry, :local_networks,
     :reputation_window, :reputation_min_count, :reputation_expiry, :spf_reputation_exclusions, :asn_database, :country_database,
@@ -33,10 +34,14 @@ module MailScore
 
   class Config
     FuzzyFlag = Data.define(:symbol, :weight, :hits_limit)
+    Group = Data.define(:max_score, :min_score)
 
     PATH = "/etc/mailscore.yml"
     # Lowest first, each a score or off.
     ACTIONS = { "greylist" => 4, "add_header" => 6, "rewrite_subject" => false, "soft_reject" => false, "reject" => 15 }.freeze
+    # The groups capped by default, and their caps.
+    GROUPS = { "headers" => { "max_score" => 8 }, "subject" => { "max_score" => 6 }, "phishing" => { "max_score" => 10 },
+      "mime_types" => { "max_score" => 10 }, "url" => { "max_score" => 9 }, "surbl" => { "max_score" => 12.5 } }.freeze
     # Every setting but fasttext_model, which is fasttext.bin beside the
     # database. workers is one per CPU. nil is none: no language model, the
     # system resolver, or autolearn scores that follow the thresholds.
@@ -50,6 +55,7 @@ module MailScore
       "greylist_timeout" => 300,
       "greylist_expiry" => 86_400,
       "actions" => ACTIONS,
+      "groups" => GROUPS,
       "regexp_timeout" => 0.5,
       "database_busy_timeout" => 5,
       "expire_every" => 60,
@@ -148,6 +154,7 @@ module MailScore
           message_size_cap: setting(settings["message_size_cap"], "message_size_cap", Integer),
           scan_budget: setting(settings["scan_budget"], "scan_budget", Numeric),
           thresholds: thresholds(settings["actions"]),
+          groups: groups(settings["groups"]),
           regexp_timeout: setting(settings["regexp_timeout"], "regexp_timeout", Numeric),
           database_busy_timeout: setting(settings["database_busy_timeout"], "database_busy_timeout", Numeric),
           expire_every: setting(settings["expire_every"], "expire_every", Numeric),
@@ -314,6 +321,23 @@ module MailScore
           on = thresholds.values.compact
           raise ConfigError, "action thresholds must rise from greylist to reject" unless on == on.sort
           thresholds
+        end
+
+        # A group left out keeps its default, as does a score a group leaves
+        # out. max_score is 0 or more and min_score 0 or less.
+        def groups(groups)
+          raise ConfigError, "groups must be a mapping" unless groups.is_a?(Hash)
+          check_keys(groups, Rules.groups, "group")
+
+          merged = GROUPS.merge(groups) { |_, default, own| own.is_a?(Hash) ? default.merge(own) : own }
+          merged.to_h { |name, scores| [ name, group(name, scores) ] }
+        end
+
+        def group(name, scores)
+          valid = scores.is_a?(Hash) && (scores.keys - %w[ max_score min_score ]).empty? && scores.values.all?(Numeric) &&
+            scores.fetch("max_score", 0) >= 0 && scores.fetch("min_score", 0) <= 0
+          raise ConfigError, "groups.#{name} must have a max_score of 0 or more, a min_score of 0 or less, or both" unless valid
+          Group.new(max_score: scores["max_score"]&.to_f, min_score: scores["min_score"]&.to_f)
         end
     end
   end

@@ -5,6 +5,7 @@ module MailScore
     # in proportion below that.
     class SubjAllCaps < Rule
       NAME = "SUBJECT_ALL_CAPS"
+      GROUP = "subject"
       WEIGHT = 3.0
       DESCRIPTION = "Subject in capitals"
 

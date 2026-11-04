@@ -8,6 +8,7 @@ module MailScore
   # timeout. Local networks and authenticated senders pass without an entry.
   class Greylister
     NAME = "GREYLISTED"
+    GROUP = "greylist"
     WEIGHT = 0.0
     DESCRIPTION = "Held for a retry"
     BODY_CAP = 10 * 1024

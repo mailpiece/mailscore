@@ -1,9 +1,10 @@
 require "test_helper"
 
 class MailScore::ScannerTest < MailScore::TestCase
-  def self.rule(name, weight)
+  def self.rule(name, weight, group = "hfilter")
     Class.new(MailScore::Rule) do
       const_set(:NAME, name)
+      const_set(:GROUP, group)
       const_set(:WEIGHT, weight)
       const_set(:DESCRIPTION, "Fires on #{name}")
       define_method(:run) { |message, _envelope| MailScore::Hit.new(name:, weight:) if message.subject.to_s.include?(name) }
@@ -14,6 +15,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class SlowRule < MailScore::Rule
     NAME = "SLOW"
+    GROUP = "hfilter"
     WEIGHT = 1
     DESCRIPTION = "Takes its time"
 
@@ -25,6 +27,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class PatientRule < MailScore::Rule
     NAME = "PATIENT"
+    GROUP = "hfilter"
     WEIGHT = 1
     DESCRIPTION = "Reports the time left"
 
@@ -35,6 +38,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class PairRule < MailScore::Rule
     NAME = "PAIR"
+    GROUP = "hfilter"
     SYMBOLS = { "LEFT" => [ 1, "Left" ], "RIGHT" => [ 2, "Right" ] }.freeze
 
     def run(_message, _envelope)
@@ -44,6 +48,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class StoredRule < MailScore::Rule
     NAME = "STORED"
+    GROUP = "hfilter"
     WEIGHT = 0
     DESCRIPTION = "Reads the config and the database"
 
@@ -54,6 +59,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class FailingRule < MailScore::Rule
     NAME = "FAILING"
+    GROUP = "hfilter"
     WEIGHT = 1
     DESCRIPTION = "Raises"
 
@@ -274,6 +280,55 @@ class MailScore::ScannerTest < MailScore::TestCase
 
     assert_equal %w[ FIVE LEFT RIGHT ], verdict.hits.map(&:name)
     assert_equal 8.0, verdict.score
+  end
+
+  def test_a_hit_past_its_groups_max_score_adds_what_is_left_and_later_ones_nothing
+    verdict = check("FIVE TWO TEN MINUS", groups: { "hfilter" => { "max_score" => 6 } })
+
+    assert_equal [ [ "FIVE", 5 ], [ "TWO", 1.0 ], [ "TEN", 0.0 ], [ "MINUS", -0.1 ] ], verdict.hits.map { [ it.name, it.weight ] }
+    assert_equal 5.9, verdict.score
+    assert_equal "no_action", verdict.action
+  end
+
+  def test_a_negative_total_stops_at_the_groups_min_score
+    verdict = check("MINUS", groups: { "hfilter" => { "min_score" => -0.05 } })
+
+    assert_equal [ -0.05 ], verdict.hits.map(&:weight)
+    assert_equal(-0.05, verdict.score)
+  end
+
+  def test_header_rules_add_at_most_eight_by_default
+    rules = [ self.class.rule("FIVE", 5, "headers"), self.class.rule("TEN", 10, "headers") ]
+
+    assert_equal [ 5, 3.0 ], check("FIVE TEN", rules:).hits.map(&:weight)
+  end
+
+  def test_url_dns_lists_add_at_most_twelve_and_a_half_by_default
+    rules = [ self.class.rule("FIVE", 5, "surbl"), self.class.rule("TEN", 10, "surbl"), RULES[1] ]
+
+    assert_equal [ 5, 7.5, 2 ], check("FIVE TEN TWO", rules:).hits.map(&:weight)
+    assert_equal [ 5, 10, 2 ], check("FIVE TEN TWO", rules:, groups: { "surbl" => { "max_score" => 0 } }).hits.map(&:weight)
+  end
+
+  def test_what_is_left_under_a_cap_is_rounded
+    rules = [ self.class.rule("SOME", 5.1, "headers"), self.class.rule("MORE", 2, "headers") ]
+
+    assert_equal [ 5.1, 0.9 ], check("SOME MORE", rules:, groups: { "headers" => { "max_score" => 6 } }).hits.map(&:weight)
+  end
+
+  def test_a_timeout_counts_toward_its_groups_cap
+    verdict = check("FIVE", rules: [ RULES[0], SlowRule, RULES[1] ], scan_budget: 0.05, groups: { "scan" => { "max_score" => 1 } })
+
+    assert_equal [ [ "FIVE", 5 ], [ "SCAN_TIMED_OUT", 1.0 ] ], verdict.hits.map { [ it.name, it.weight ] }
+    assert_equal 6.0, verdict.score
+  end
+
+  def test_a_failed_scan_is_capped
+    config = MailScore::Config.parse(SETTINGS.merge("groups" => { "scan" => { "max_score" => 1 } }), env: TOKENS)
+    verdict = MailScore::Scanner.new(config, rules: RULES, stats: @stats).failed(MailScore::Message.new("Subject: x\n\nbody"))
+
+    assert_equal [ 1.0 ], verdict.hits.map(&:weight)
+    assert_equal 1.0, verdict.score
   end
 
   def test_every_rule_is_built_with_the_config_and_the_database

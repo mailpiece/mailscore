@@ -126,13 +126,13 @@ class MailScore::Rules::DnsListsDomainsTest < MailScore::TestCase
     assert_equal digests, dns.queries.map(&:first)
   end
 
-  def test_return_bits_name_the_listing_and_the_lists_weigh_at_most_their_cap
+  def test_return_bits_name_the_listing
     zone = { "example.com.multi.example" => { a: [ "127.0.0.24" ] }, "example.com.dbl.example" => { a: [ "127.0.1.2" ] },
       "example.org.multi.example" => { a: [ "127.0.0.64" ] } }
     hits = run_rule("http://example.com http://example.org", dns: fake(zone))
 
-    assert_equal [ [ "PH_MULTI", 7.5, "example.com" ], [ "MW_MULTI", 5.0, "example.com" ], [ "MULTI", 0, "example.org 127.0.0.64" ],
-      [ "SPAMHAUS_DOMAIN_SPAM", 0.0, "example.com" ] ], hits.map { [ it.name, it.weight, it.detail ] }
+    assert_equal [ [ "PH_MULTI", 7.5, "example.com" ], [ "MW_MULTI", 7.5, "example.com" ], [ "MULTI", 0.0, "example.org 127.0.0.64" ],
+      [ "SPAMHAUS_DOMAIN_SPAM", 6.5, "example.com" ] ], hits.map { [ it.name, it.weight, it.detail ] }
   end
 
   def test_an_address_in_a_url_is_asked_by_its_reversed_octets_of_lists_that_take_addresses

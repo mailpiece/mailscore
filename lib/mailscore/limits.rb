@@ -5,6 +5,7 @@ module MailScore
   # nothing.
   module Limits
     NAME = "LIMITS"
+    GROUP = "limits"
 
     SYMBOLS = {
       "TOO_MANY_HEADERS" => [ 1.0, "Too many headers to read" ],

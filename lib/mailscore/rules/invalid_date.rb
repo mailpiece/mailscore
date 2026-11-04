@@ -3,6 +3,7 @@ module MailScore
     # A Date field that cannot be read as a date.
     class InvalidDate < Rule
       NAME = "DATE_INVALID"
+      GROUP = "headers"
       WEIGHT = 1.5
       DESCRIPTION = "Malformed Date header"
 

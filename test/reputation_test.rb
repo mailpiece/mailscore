@@ -223,6 +223,7 @@ class MailScore::ReputationTest < MailScore::TestCase
   def test_a_scan_scores_before_it_is_recorded
     rule = Class.new(MailScore::Rule) do
       const_set(:NAME, "SPAMMY")
+      const_set(:GROUP, "hfilter")
       const_set(:WEIGHT, 20)
       const_set(:DESCRIPTION, "Always fires")
       define_method(:run) { |_message, _envelope| MailScore::Hit.new(name: "SPAMMY", weight: 20) }

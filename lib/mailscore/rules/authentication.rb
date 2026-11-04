@@ -10,6 +10,7 @@ module MailScore
     # the checks raise, ERROR fires in place of every hit.
     class Authentication < Rule
       NAME = "AUTHENTICATION"
+      GROUP = "policies"
       ERROR = "AUTHENTICATION_ERROR"
 
       SYMBOLS = {

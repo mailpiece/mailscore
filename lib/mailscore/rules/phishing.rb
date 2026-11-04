@@ -7,6 +7,7 @@ module MailScore
     # a wrapper matches when it names the shown domain as its one target.
     class Phishing < Rule
       NAME = "LINK_TEXT_MISMATCH"
+      GROUP = "phishing"
       WEIGHT = 4.0
       DESCRIPTION = "Link text names another site"
 
