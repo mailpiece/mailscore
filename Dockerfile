@@ -25,8 +25,10 @@ COPY lib/mailscore/version.rb lib/mailscore/
 # The committed lock pins the versions for x86_64 and aarch64 Linux. Install
 # frozen, without the development and test gems, and audit the lock with a
 # bundle-audit of its own, kept out of the bundle that ships. bundle-audit
-# fetches its advisory database, so this needs network.
-RUN bundle install && \
+# fetches its advisory database, so this needs network. The fasttext option
+# is the gem author's fix for it building for the build machine's own CPU.
+RUN bundle config build.fasttext --with-optflags="" && \
+    bundle install && \
     gem install --no-document --install-dir /tmp/audit bundler-audit && \
     GEM_HOME=/tmp/audit GEM_PATH=/tmp/audit /tmp/audit/bin/bundle-audit check --update && \
     rm -rf /tmp/audit ~/.bundle ~/.local/share/ruby-advisory-db "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
