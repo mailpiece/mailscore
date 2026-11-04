@@ -1,21 +1,26 @@
 require "ipaddr"
+require "yaml"
 
 module MailScore
   class DnsList
     # Reads the +dnsbl+ and +uribl+ settings into lists, raising ConfigError
-    # for anything malformed or a symbol named twice.
+    # for anything malformed or a symbol named twice. +recommended+ is the
+    # bundled set of lists.
     module Parser
       SYMBOL = /\A[A-Z][A-Z0-9_]*\z/
       SWITCHES = { "unknown" => true, "ipv4" => true, "ipv6" => true, "no_ip" => false, "url_full_hostname" => false,
         "emails_domainonly" => false, "dkim_domainonly" => true, "is_whitelist" => false, "ignore_whitelist" => false,
-        "exclude_users" => true, "exclude_local" => true }.freeze
+        "exclude_users" => true, "exclude_local" => true, "disable_monitoring" => false }.freeze
+      MONITORED_ADDRESS = "1.0.0.127"
       REQUESTS_LIMIT = 64
       RECEIVED_MAX_POS = 5
       HASHES = %w[ md5 sha1 sha256 sha384 sha512 blake2 ].freeze
       HASH_FORMATS = %w[ hex base32 base64 ].freeze
+      RECOMMENDED = YAML.safe_load_file(File.join(__dir__, "recommended.yml")).freeze
 
       def self.parse(lists, key, checks:)
-        raise ConfigError, "#{key} must be a list of zones" unless lists.is_a?(Array)
+        lists = RECOMMENDED.fetch(key) if lists == "recommended"
+        raise ConfigError, "#{key} must be recommended or a list of zones" unless lists.is_a?(Array)
 
         lists = lists.each_with_index.map { |list, index| list(list, "#{key}[#{index}]", checks) }
         symbols = lists.flat_map { it.symbols.keys }
@@ -27,7 +32,8 @@ module MailScore
         raise ConfigError, "#{name} must be a mapping" unless list.is_a?(Hash)
 
         required = %w[ zone symbol weight ]
-        optional = %w[ returncodes returnbits whitelist_exception checks requests_limit received_max_pos prefixes hash hash_len hash_format emails_delimiter ] + SWITCHES.keys
+        optional = %w[ returncodes returnbits whitelist_exception checks requests_limit received_max_pos prefixes hash hash_len hash_format emails_delimiter
+          monitored_address random_monitored ] + SWITCHES.keys
         if (unknown = list.keys - required - optional).any?
           raise ConfigError, "unknown #{name} setting: #{unknown.join(", ")}"
         end
@@ -40,6 +46,9 @@ module MailScore
 
         checks = checks(list.fetch("checks", checks), "#{name}.checks")
         prefixes = prefixes(list.fetch("prefixes", {}), checks, "#{name}.prefixes")
+        switches = SWITCHES.to_h { |switch, default| [ switch.to_sym, switch(list.fetch(switch, default), "#{name}.#{switch}") ] }
+        # A list not asked about addresses is probed with a random name
+        random_monitored = (checks & %w[ from received ]).empty? || switches[:no_ip]
 
         DnsList.new \
           zone: list["zone"].downcase.delete_suffix("."),
@@ -56,7 +65,9 @@ module MailScore
           emails_delimiter: list["emails_delimiter"].nil? ? nil : delimiter(list["emails_delimiter"], "#{name}.emails_delimiter"),
           requests_limit: limit(list.fetch("requests_limit", REQUESTS_LIMIT), "#{name}.requests_limit"),
           received_max_pos: limit(list.fetch("received_max_pos", RECEIVED_MAX_POS), "#{name}.received_max_pos"),
-          **SWITCHES.to_h { |switch, default| [ switch.to_sym, switch(list.fetch(switch, default), "#{name}.#{switch}") ] }
+          monitored_address: monitored_address(list.fetch("monitored_address", MONITORED_ADDRESS), "#{name}.monitored_address"),
+          random_monitored: switch(list.fetch("random_monitored", random_monitored), "#{name}.random_monitored"),
+          **switches
       end
 
       def self.checks(value, key)
@@ -79,6 +90,11 @@ module MailScore
 
       def self.delimiter(value, key)
         raise ConfigError, "#{key} must be a string" unless value.is_a?(String)
+        value
+      end
+
+      def self.monitored_address(value, key)
+        raise ConfigError, "#{key} must be a DNS name" unless value.is_a?(String) && DnsList.valid_name?(value)
         value
       end
 

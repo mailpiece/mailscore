@@ -41,6 +41,28 @@ class MailScore::Rules::DnsListsClientTest < MailScore::TestCase
       run_rule("203.0.113.9", { "9.113.0.203.zen.example" => { a: :timeout }, "9.113.0.203.v4.example" => { a: :servfail } }).map { [ it.name, it.weight, it.detail ] }
   end
 
+  def test_a_list_the_prober_has_offline_is_not_asked_until_it_comes_back
+    database = MailScore::Database.new(File.join(Dir.mktmpdir, "mailscore.sqlite3"), busy_timeout: 5).tap(&:prepare)
+    probe = { "1.0.0.127.zen.example" => { a: [ "127.0.0.2" ] } }
+    prober = Object.new.tap { it.define_singleton_method(:a) { |name| MailResolver::Testing::FakeResolver.new(probe).a(name) } }
+    monitor = MailScore::DnsList::Monitor.new(MailScore::Config.parse(SETTINGS.merge("dnsbl" => LISTS), env: TOKENS).dnsbl.first, database, dns: prober)
+    listed = { "9.113.0.203.zen.example" => { a: [ "127.0.0.2" ] }, "9.113.0.203.v4.example" => { a: [ "127.0.0.2" ] } }
+
+    3.times { monitor.probe }
+    MailScore::DnsList::Monitor.read(database)
+    dns = MailResolver::Testing::FakeResolver.new(listed)
+    assert_equal [ "V4" ], run_rule("203.0.113.9", dns:).map(&:name)
+    assert_equal [ "9.113.0.203.v4.example" ], dns.queries.map(&:first)
+
+    probe.clear
+    monitor.probe
+    MailScore::DnsList::Monitor.read(database)
+    assert_equal [ "ZEN_SBL", "V4" ], run_rule("203.0.113.9", listed).map(&:name)
+  ensure
+    database&.close
+    MailScore.offline_dns_lists = nil
+  end
+
   def test_trusted_and_local_senders_are_not_asked
     dns = MailResolver::Testing::FakeResolver.new
 

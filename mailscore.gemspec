@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir[
     "lib/**/*.rb",
     "lib/**/*.txt",
+    "lib/**/*.yml",
     "exe/*",
     "docs/**/*.md",
     "CHANGELOG.md",

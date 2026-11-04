@@ -1,0 +1,192 @@
+# The recommended DNS lists, with their checks, codes and weights, asked
+# with dnsbl: recommended and uribl: recommended. See docs/dns-lists.md.
+dnsbl:
+  - zone: zen.spamhaus.org
+    symbol: SPAMHAUS
+    weight: { CLIENT: 0, RECEIVED: 0 }
+    checks: [ from, received ]
+    prefixes: { from: CLIENT, received: RECEIVED }
+    returncodes:
+      SPAMHAUS_SPAM_SOURCE: { weight: { CLIENT: 4.0, RECEIVED: 3.0 }, codes: [ 127.0.0.2 ] }
+      SPAMHAUS_SNOWSHOE_SPAM: { weight: { CLIENT: 2.0, RECEIVED: 1.0 }, codes: [ 127.0.0.3 ] }
+      SPAMHAUS_INFECTED_HOST: { weight: { CLIENT: 4.0, RECEIVED: 1.0 }, codes: [ 127.0.0.4, 127.0.0.5, 127.0.0.6, 127.0.0.7 ] }
+      SPAMHAUS_DYNAMIC_IP: { weight: { CLIENT: 2.0, RECEIVED: 0 }, codes: [ 127.0.0.10, 127.0.0.11 ] }
+      SPAMHAUS_HIJACKED_NETWORK: { weight: { CLIENT: 7.0, RECEIVED: 6.0 }, codes: [ 127.0.0.9 ] }
+      SPAMHAUS_REFUSED_RESOLVER: { weight: { CLIENT: 0, RECEIVED: 0 }, codes: [ 127.255.255.254 ] }
+      SPAMHAUS_REFUSED: { weight: { CLIENT: 0, RECEIVED: 0 }, codes: [ 127.255.255.255 ] }
+  - zone: rep.mailspike.net
+    symbol: MAILSPIKE
+    weight: 0
+    is_whitelist: true
+    whitelist_exception: [ MAILSPIKE, MAILSPIKE_GOOD, MAILSPIKE_NEUTRAL, MAILSPIKE_POSSIBLY_GOOD, MAILSPIKE_WORST, MAILSPIKE_VERY_BAD, MAILSPIKE_BAD ]
+    returncodes:
+      MAILSPIKE_WORST: { weight: 2.0, codes: [ 127.0.0.10 ] }
+      MAILSPIKE_VERY_BAD: { weight: 1.5, codes: [ 127.0.0.11 ] }
+      MAILSPIKE_BAD: { weight: 1.0, codes: [ 127.0.0.12 ] }
+      MAILSPIKE_NEUTRAL: { weight: 0, codes: [ 127.0.0.13, 127.0.0.14, 127.0.0.15, 127.0.0.16 ] }
+      MAILSPIKE_POSSIBLY_GOOD: { weight: 0, codes: [ 127.0.0.17 ] }
+      MAILSPIKE_GOOD: { weight: -0.1, codes: [ 127.0.0.18 ] }
+      MAILSPIKE_VERY_GOOD: { weight: -0.2, codes: [ 127.0.0.19 ] }
+      MAILSPIKE_EXCELLENT: { weight: -0.4, codes: [ 127.0.0.20 ] }
+  - zone: list.dnswl.org
+    symbol: DNSWL
+    weight: 0
+    checks: [ from, received ]
+    is_whitelist: true
+    whitelist_exception: [ DNSWL, DNSWL_TRUST_NONE, DNSWL_TRUST_LOW, DNSWL_REFUSED ]
+    returncodes:
+      DNSWL_TRUST_NONE: { weight: 0, codes: [ "127%.0%.%d%.0", "127%.0%.[02-9]%d%.0", "127%.0%.1[1-9]%.0", "127%.0%.[12]%d%d%.0" ] }
+      DNSWL_TRUST_LOW: { weight: -0.1, codes: [ "127%.0%.%d%.1", "127%.0%.[02-9]%d%.1", "127%.0%.1[1-9]%.1", "127%.0%.[12]%d%d%.1" ] }
+      DNSWL_TRUST_MEDIUM: { weight: -0.2, codes: [ "127%.0%.%d%.2", "127%.0%.[02-9]%d%.2", "127%.0%.1[1-9]%.2", "127%.0%.[12]%d%d%.2" ] }
+      DNSWL_TRUST_HIGH: { weight: -0.5, codes: [ "127%.0%.%d%.3", "127%.0%.[02-9]%d%.3", "127%.0%.1[1-9]%.3", "127%.0%.[12]%d%d%.3" ] }
+      DNSWL_REFUSED: { weight: 0, codes: [ "127%.0%.0%.255", "127%.0%.10%.%d+" ] }
+  - zone: dwl.dnswl.org
+    symbol: DNSWL_DOMAIN
+    weight: 0
+    checks: [ dkim ]
+    unknown: false
+    ignore_whitelist: true
+    returncodes:
+      DNSWL_DOMAIN_TRUST_NONE: { weight: 0, codes: [ "127%.0%.%d%.0", "127%.0%.[02-9]%d%.0", "127%.0%.1[1-9]%.0", "127%.0%.[12]%d%d%.0" ] }
+      DNSWL_DOMAIN_TRUST_LOW: { weight: -1.0, codes: [ "127%.0%.%d%.1", "127%.0%.[02-9]%d%.1", "127%.0%.1[1-9]%.1", "127%.0%.[12]%d%d%.1" ] }
+      DNSWL_DOMAIN_TRUST_MEDIUM: { weight: -2.0, codes: [ "127%.0%.%d%.2", "127%.0%.[02-9]%d%.2", "127%.0%.1[1-9]%.2", "127%.0%.[12]%d%d%.2" ] }
+      DNSWL_DOMAIN_TRUST_HIGH: { weight: -3.5, codes: [ "127%.0%.%d%.3", "127%.0%.[02-9]%d%.3", "127%.0%.1[1-9]%.3", "127%.0%.[12]%d%d%.3" ] }
+      DNSWL_DOMAIN_REFUSED: { weight: 0, codes: [ "127%.0%.0%.255", "127%.0%.10%.%d+" ] }
+  - zone: bl.spameatingmonkey.net
+    symbol: SEM
+    weight: 1.0
+    ipv6: false
+  - zone: bl.ipv6.spameatingmonkey.net
+    symbol: SEM_IPV6
+    weight: 1.0
+    ipv4: false
+  - zone: bip.virusfree.cz
+    symbol: VIRUSFREE
+    weight: 0
+    returncodes:
+      VIRUSFREE_BOTNET: { weight: 2.0, codes: [ 127.0.0.2 ] }
+  - zone: bl.blocklist.de
+    symbol: BLOCKLIST_DE
+    weight: { CLIENT: 4.0, RECEIVED: 3.0 }
+    checks: [ from, received ]
+    prefixes: { from: CLIENT, received: RECEIVED }
+
+uribl:
+  - zone: ebl.msbl.org
+    symbol: MSBL_EMAIL
+    weight: 7.5
+    checks: [ emails, replyto, from_smtp, from_mime ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    hash: sha1
+    ignore_whitelist: true
+    returncodes:
+      MSBL_EMAIL_SPAM: { weight: 7.5, codes: [ 127.0.0.2, 127.0.0.3 ] }
+      MSBL_EMAIL_SUSPECT: { weight: 0.5, codes: [ 127.0.1.2, 127.0.1.3 ] }
+  - zone: email.rspamd.com
+    symbol: HASHED_EMAIL
+    weight: 2.5
+    checks: [ emails, replyto, from_smtp, from_mime ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    hash: blake2
+    hash_len: 32
+    hash_format: base32
+    emails_delimiter: "."
+    ignore_whitelist: true
+    returncodes:
+      HASHED_EMAIL_SPAM: { weight: 2.5, codes: [ 127.0.0.2 ] }
+  - zone: multi.surbl.org
+    symbol: SURBL
+    weight: 0
+    checks: [ emails, dkim, helo, rdns, replyto, urls, content_urls, from_smtp, from_mime, mid ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    url_full_hostname: true
+    emails_domainonly: true
+    dkim_domainonly: false
+    returnbits:
+      SURBL_HACKED_SITE: { weight: 5.0, bit: 128 }
+      SURBL_ABUSE: { weight: 5.0, bit: 64 }
+      SURBL_CLICK_TRACKER: { weight: 0, bit: 32 }
+      SURBL_MALWARE: { weight: 7.5, bit: 16 }
+      SURBL_PHISHING: { weight: 7.5, bit: 8 }
+      SURBL_DISPOSABLE_MAIL: { weight: 0, bit: 4 }
+      SURBL_REFUSED: { weight: 0, bit: 1 }
+  - zone: multi.uribl.com
+    symbol: URIBL
+    weight: 0
+    checks: [ emails, dkim, helo, rdns, replyto, urls, content_urls, from_smtp, from_mime, mid ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    emails_domainonly: true
+    dkim_domainonly: false
+    returnbits:
+      URIBL_REFUSED: { weight: 0, bit: 1 }
+      URIBL_SPAM: { weight: 7.5, bit: 2 }
+      URIBL_SUSPECT: { weight: 2.5, bit: 4 }
+      URIBL_WATCHED: { weight: 0.5, bit: 8 }
+  - zone: uribl.rspamd.com
+    symbol: HASHED_DOMAIN
+    weight: 4.5
+    checks: [ emails, dkim, urls, content_urls ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    no_ip: true
+    emails_domainonly: true
+    hash: blake2
+    hash_len: 32
+    hash_format: base32
+    returncodes:
+      HASHED_DOMAIN_SPAM: { weight: 4.5, codes: [ 127.0.0.2 ] }
+  - zone: dbl.spamhaus.org
+    symbol: SPAMHAUS_DOMAIN
+    weight: 0
+    checks: [ emails, dkim, helo, rdns, replyto, urls, content_urls, from_smtp, from_mime, mid ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    no_ip: true
+    emails_domainonly: true
+    dkim_domainonly: false
+    returncodes:
+      SPAMHAUS_DOMAIN_SPAM: { weight: 6.5, codes: [ 127.0.1.2 ] }
+      SPAMHAUS_DOMAIN_PHISHING: { weight: 7.5, codes: [ 127.0.1.4 ] }
+      SPAMHAUS_DOMAIN_MALWARE: { weight: 7.5, codes: [ 127.0.1.5 ] }
+      SPAMHAUS_DOMAIN_BOTNET: { weight: 7.5, codes: [ 127.0.1.6 ] }
+      SPAMHAUS_ABUSED_SPAM: { weight: 5.0, codes: [ 127.0.1.102 ] }
+      SPAMHAUS_ABUSED_REDIRECTOR: { weight: 5.0, codes: [ 127.0.1.103 ] }
+      SPAMHAUS_ABUSED_PHISHING: { weight: 6.5, codes: [ 127.0.1.104 ] }
+      SPAMHAUS_ABUSED_MALWARE: { weight: 6.5, codes: [ 127.0.1.105 ] }
+      SPAMHAUS_ABUSED_BOTNET: { weight: 6.5, codes: [ 127.0.1.106 ] }
+      SPAMHAUS_DOMAIN_PROHIBITED: { weight: 0, codes: [ 127.0.1.255 ] }
+      SPAMHAUS_DOMAIN_REFUSED_RESOLVER: { weight: 0, codes: [ 127.255.255.254 ] }
+      SPAMHAUS_DOMAIN_REFUSED: { weight: 0, codes: [ 127.255.255.255 ] }
+  - zone: uribl.spameatingmonkey.net
+    symbol: SEM_DOMAIN
+    weight: 0
+    checks: [ emails, dkim, urls, content_urls, from_smtp, from_mime, mid ]
+    unknown: false
+    exclude_users: false
+    exclude_local: false
+    no_ip: true
+    emails_domainonly: true
+    dkim_domainonly: false
+    returnbits:
+      SEM_DOMAIN_SPAM: { weight: 3.5, bit: 2 }
+  - zone: fresh15.spameatingmonkey.net
+    symbol: SEM_NEW_DOMAIN
+    weight: 0
+    checks: [ emails, dkim, urls, content_urls, from_smtp, from_mime, mid ]
+    unknown: false
+    exclude_local: false
+    no_ip: true
+    emails_domainonly: true
+    dkim_domainonly: false
+    returnbits:
+      SEM_NEW_DOMAIN_SPAM: { weight: 3.0, bit: 2 }

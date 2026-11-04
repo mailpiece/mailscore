@@ -30,6 +30,7 @@ module MailScore
       CREATE INDEX IF NOT EXISTS fasttext_samples_expires_at ON fasttext_samples (expires_at);
       CREATE TABLE IF NOT EXISTS fasttext_trainings (id INTEGER PRIMARY KEY, trained_at INTEGER NOT NULL, spam INTEGER NOT NULL, ham INTEGER NOT NULL,
         accuracy REAL NOT NULL, previous_accuracy REAL, swapped INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS offline_dns_lists (zone TEXT PRIMARY KEY) WITHOUT ROWID;
     SQL
 
     # A table whose columns no longer match is dropped before the schema
@@ -45,13 +46,15 @@ module MailScore
       @mutex = Monitor.new
     end
 
-    # Creates the schema and zeroes the counters. Run once at boot, before the fork.
+    # Creates the schema, zeroes the counters and forgets the DNS lists
+    # offline. Run once at boot, before the fork.
     def prepare
       @mutex.synchronize do
         drop_outdated_tables
         connection.execute_batch(SCHEMA)
       end
       execute("DELETE FROM counters")
+      execute("DELETE FROM offline_dns_lists")
     end
 
     def execute(sql, *params)
