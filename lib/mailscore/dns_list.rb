@@ -18,10 +18,13 @@ module MailScore
   # name, short of +whitelist_exception+, the other lists are not asked
   # about the same way, unless they +ignore_whitelist+. A list that says
   # +exclude_users+ skips authenticated senders, and +exclude_local+ the
-  # local networks.
+  # local networks. Worker 0 probes a list with +monitored_address+, or a
+  # random name with +random_monitored+, unless +disable_monitoring+, and
+  # every worker skips it while it is offline: see Monitor.
   DnsList = Data.define(:zone, :symbol, :weight, :returns, :unknown, :checks, :prefixes, :requests_limit, :ipv4, :ipv6, :no_ip,
     :url_full_hostname, :emails_domainonly, :emails_delimiter, :dkim_domainonly, :digest, :hash_len, :hash_format,
-    :is_whitelist, :whitelist_exception, :ignore_whitelist, :exclude_users, :exclude_local)
+    :is_whitelist, :whitelist_exception, :ignore_whitelist, :exclude_users, :exclude_local, :monitored_address, :random_monitored,
+    :disable_monitoring)
 
   class DnsList
     # Lua-style patterns for return codes, such as 127%.0%.%d+%.1: %d for a
@@ -203,6 +206,10 @@ module MailScore
     def self.zbase32(bytes)
       bits = bytes.bytes.each_with_index.sum { |byte, index| byte << (8 * index) }
       Array.new((bytes.bytesize * 8 + 4) / 5) { ZBASE32[(bits >> (5 * it)) & 0x1f] }.join
+    end
+
+    def offline?
+      MailScore.offline_dns_lists.include?(zone)
     end
 
     def takes?(address)

@@ -84,6 +84,10 @@ module MailScore
           puma.app app
           puma.before_worker_boot do |index|
             MailScore.nameservers.refresh_every(config.nameservers_refresh)
+            if (lists = config.dnsbl + config.uribl).any?
+              DnsList::Monitor.follow(app.database)
+              DnsList::Monitor.start(lists, app.database) if index.zero?
+            end
             if index.zero?
               expire_in_the_background(app.database)
               train_in_the_background(app.database) if config.fasttext
