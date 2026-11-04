@@ -13,13 +13,20 @@ class MailScore::Rules::MimeArchiveInArchiveTest < MailScore::TestCase
     assert_nil run_rule(zip("report.pdf"))
   end
 
+  def test_an_archive_extensions_file_replaces_the_list
+    path = File.join(Dir.mktmpdir, "archive_extensions.txt").tap { File.write(it, "tar\n") }
+
+    assert run_rule(zip("inner.tar"), "archive_extensions" => path)
+    assert_nil run_rule(zip("inner.rar"), "archive_extensions" => path)
+  end
+
   private
     def zip(entry)
       [ "PK\x03\x04".b + "\0" * 22 + [ entry.bytesize ].pack("v") + "\0\0" + entry ].pack("m")
     end
 
-    def run_rule(body)
+    def run_rule(body, settings = {})
       message = MailScore::Message.new("Content-Type: application/zip; name=a.zip\nContent-Transfer-Encoding: base64\n\n#{body}")
-      MailScore::Rules::MimeArchiveInArchive.new(nil, nil).run(message, MailScore::Envelope.read({}, message))
+      MailScore::Rules::MimeArchiveInArchive.new(MailScore::Config.parse(SETTINGS.merge(settings), env: TOKENS), nil).run(message, MailScore::Envelope.read({}, message))
     end
 end

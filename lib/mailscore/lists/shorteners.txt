@@ -1,0 +1,20 @@
+# URL shorteners, a host a line, each matching its subdomains too.
+1url.com
+adf.ly
+amzn.to
+bit.do
+bit.ly
+clck.ru
+cli.gs
+dlvr.it
+fb.me
+goo.gl
+is.gd
+lnkd.in
+ow.ly
+su.pr
+t.co
+tiny.cc
+tinyurl.com
+tr.im
+wp.me

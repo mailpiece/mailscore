@@ -45,9 +45,16 @@ class MailScore::Rules::PhishingTest < MailScore::TestCase
     assert_nil run_rule(%(<a href="mailto:a@example.com">www.example.com</a>))
   end
 
+  def test_a_trusted_redirectors_file_replaces_the_list
+    path = File.join(Dir.mktmpdir, "trusted_redirectors.txt").tap { File.write(it, "wrap.example\n") }
+
+    assert_nil run_rule(%(<a href="https://eu.wrap.example/x">www.shop.example</a>), "trusted_redirectors" => path)
+    assert run_rule(%(<a href="https://x.list-manage.com/track">www.shop.example</a>), "trusted_redirectors" => path)
+  end
+
   private
-    def run_rule(html)
+    def run_rule(html, settings = {})
       message = MailScore::Message.new("Content-Type: text/html\n\n#{html}")
-      MailScore::Rules::Phishing.new(nil, nil).run(message, MailScore::Envelope.read({}, message))
+      MailScore::Rules::Phishing.new(MailScore::Config.parse(SETTINGS.merge(settings), env: TOKENS), nil).run(message, MailScore::Envelope.read({}, message))
     end
 end

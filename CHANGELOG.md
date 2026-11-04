@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group
+- Shorteners, trusted redirectors, risky and archive extensions are bundled files a setting replaces
 
 ## 0.1.1
 
