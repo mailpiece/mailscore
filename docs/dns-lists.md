@@ -3,15 +3,20 @@
 This page describes the `dnsbl` and `uribl` settings: what each list is asked about and how its answers score.
 See also [Deploy](deploy.md#dns) for the resolver they go through, and [the example config](mailscore.example.yml).
 
-The code lives in [lib/mailscore/dns_list.rb](../lib/mailscore/dns_list.rb) and [lib/mailscore/dns_list/parser.rb](../lib/mailscore/dns_list/parser.rb).
+The code lives in [lib/mailscore/dns_list.rb](../lib/mailscore/dns_list.rb) and [lib/mailscore/dns_list/parser.rb](../lib/mailscore/dns_list/parser.rb), and the recommended lists in [lib/mailscore/dns_list/recommended.yml](../lib/mailscore/dns_list/recommended.yml).
 
-mailscore can ask DNS block lists and allow-lists about the client IP and about the names a message carries: its URLs' domains, its senders, its Message-ID, its DKIM signers and more. Lists are off by default: no list is asked until the config names it.
+mailscore can ask DNS block lists and allow-lists about the client IP and about the names a message carries: its URLs' domains, its senders, its Message-ID, its DKIM signers and more. It asks none until the config names some, and ships a recommended set, listed under [Recommended lists](#recommended-lists), switched on with one line each:
 
-Most lists need an account, a key or both, and each has its own terms of use, usually free only for low volume and non-commercial use. Read them before you turn a list on.
+```yaml
+dnsbl: recommended
+uribl: recommended
+```
+
+Most of these lists are free only for non-commercial, low-volume use, and each has its own terms, such as Spamhaus's [fair use policy](https://www.spamhaus.org/blocklists/dnsbl-fair-use-policy/): check each list's terms before you switch it on.
 
 ## Settings
 
-Two settings list zones, and take the same keys. `dnsbl` is for lists about the client, and its zones ask about the client IP unless they say otherwise. `uribl` is for lists about domains, and its zones ask about URLs unless they say otherwise. `dnsbl` symbols are in the `rbl` group and `uribl` symbols in `surbl`, which by default weighs at most 12.5 per message; see [Groups](api.md#groups).
+Two settings list zones, or say `recommended`, and take the same keys. `dnsbl` is for lists about the client, and its zones ask about the client IP unless they say otherwise. `uribl` is for lists about domains, and its zones ask about URLs unless they say otherwise. `dnsbl` symbols are in the `rbl` group and `uribl` symbols in `surbl`, which by default weighs at most 12.5 per message; see [Groups](api.md#groups).
 
 ```yaml
 dnsbl:
@@ -78,176 +83,32 @@ dnsbl:
 - The lists are asked in parallel, 16 at a time, within the scan budget.
 - `/symbols` names each zone, with a label of 20 or more letters and digits, such as a Data Query Service key, shown as `<key>`.
 
-## Example
+## Recommended lists
 
-These are widely used public lists, with suggested weights and checks. They are an example only, not mailscore's defaults.
+`dnsbl: recommended` and `uribl: recommended` ask these lists, with their checks, return codes and weights written as settings in [lib/mailscore/dns_list/recommended.yml](../lib/mailscore/dns_list/recommended.yml).
 
-```yaml
-dnsbl:
-  - zone: zen.spamhaus.org
-    symbol: SPAMHAUS
-    weight: { CLIENT: 0, RECEIVED: 0 }
-    checks: [ from, received ]
-    prefixes: { from: CLIENT, received: RECEIVED }
-    returncodes:
-      SPAMHAUS_SPAM_SOURCE: { weight: { CLIENT: 4.0, RECEIVED: 3.0 }, codes: [ 127.0.0.2 ] }
-      SPAMHAUS_SNOWSHOE_SPAM: { weight: { CLIENT: 2.0, RECEIVED: 1.0 }, codes: [ 127.0.0.3 ] }
-      SPAMHAUS_INFECTED_HOST: { weight: { CLIENT: 4.0, RECEIVED: 1.0 }, codes: [ 127.0.0.4, 127.0.0.5, 127.0.0.6, 127.0.0.7 ] }
-      SPAMHAUS_DYNAMIC_IP: { weight: { CLIENT: 2.0, RECEIVED: 0 }, codes: [ 127.0.0.10, 127.0.0.11 ] }
-      SPAMHAUS_HIJACKED_NETWORK: { weight: { CLIENT: 7.0, RECEIVED: 6.0 }, codes: [ 127.0.0.9 ] }
-      SPAMHAUS_REFUSED_RESOLVER: { weight: { CLIENT: 0, RECEIVED: 0 }, codes: [ 127.255.255.254 ] }
-      SPAMHAUS_REFUSED: { weight: { CLIENT: 0, RECEIVED: 0 }, codes: [ 127.255.255.255 ] }
-  - zone: rep.mailspike.net
-    symbol: MAILSPIKE
-    weight: 0
-    is_whitelist: true
-    whitelist_exception: [ MAILSPIKE, MAILSPIKE_GOOD, MAILSPIKE_NEUTRAL, MAILSPIKE_POSSIBLY_GOOD, MAILSPIKE_WORST, MAILSPIKE_VERY_BAD, MAILSPIKE_BAD ]
-    returncodes:
-      MAILSPIKE_WORST: { weight: 2.0, codes: [ 127.0.0.10 ] }
-      MAILSPIKE_VERY_BAD: { weight: 1.5, codes: [ 127.0.0.11 ] }
-      MAILSPIKE_BAD: { weight: 1.0, codes: [ 127.0.0.12 ] }
-      MAILSPIKE_NEUTRAL: { weight: 0, codes: [ 127.0.0.13, 127.0.0.14, 127.0.0.15, 127.0.0.16 ] }
-      MAILSPIKE_POSSIBLY_GOOD: { weight: 0, codes: [ 127.0.0.17 ] }
-      MAILSPIKE_GOOD: { weight: -0.1, codes: [ 127.0.0.18 ] }
-      MAILSPIKE_VERY_GOOD: { weight: -0.2, codes: [ 127.0.0.19 ] }
-      MAILSPIKE_EXCELLENT: { weight: -0.4, codes: [ 127.0.0.20 ] }
-  - zone: list.dnswl.org
-    symbol: DNSWL
-    weight: 0
-    checks: [ from, received ]
-    is_whitelist: true
-    whitelist_exception: [ DNSWL, DNSWL_TRUST_NONE, DNSWL_TRUST_LOW, DNSWL_REFUSED ]
-    returncodes:
-      DNSWL_TRUST_NONE: { weight: 0, codes: [ "127%.0%.%d%.0", "127%.0%.[02-9]%d%.0", "127%.0%.1[1-9]%.0", "127%.0%.[12]%d%d%.0" ] }
-      DNSWL_TRUST_LOW: { weight: -0.1, codes: [ "127%.0%.%d%.1", "127%.0%.[02-9]%d%.1", "127%.0%.1[1-9]%.1", "127%.0%.[12]%d%d%.1" ] }
-      DNSWL_TRUST_MEDIUM: { weight: -0.2, codes: [ "127%.0%.%d%.2", "127%.0%.[02-9]%d%.2", "127%.0%.1[1-9]%.2", "127%.0%.[12]%d%d%.2" ] }
-      DNSWL_TRUST_HIGH: { weight: -0.5, codes: [ "127%.0%.%d%.3", "127%.0%.[02-9]%d%.3", "127%.0%.1[1-9]%.3", "127%.0%.[12]%d%d%.3" ] }
-      DNSWL_REFUSED: { weight: 0, codes: [ "127%.0%.0%.255", "127%.0%.10%.%d+" ] }
-  - zone: dwl.dnswl.org
-    symbol: DNSWL_DOMAIN
-    weight: 0
-    checks: [ dkim ]
-    unknown: false
-    ignore_whitelist: true
-    returncodes:
-      DNSWL_DOMAIN_TRUST_NONE: { weight: 0, codes: [ "127%.0%.%d%.0", "127%.0%.[02-9]%d%.0", "127%.0%.1[1-9]%.0", "127%.0%.[12]%d%d%.0" ] }
-      DNSWL_DOMAIN_TRUST_LOW: { weight: -1.0, codes: [ "127%.0%.%d%.1", "127%.0%.[02-9]%d%.1", "127%.0%.1[1-9]%.1", "127%.0%.[12]%d%d%.1" ] }
-      DNSWL_DOMAIN_TRUST_MEDIUM: { weight: -2.0, codes: [ "127%.0%.%d%.2", "127%.0%.[02-9]%d%.2", "127%.0%.1[1-9]%.2", "127%.0%.[12]%d%d%.2" ] }
-      DNSWL_DOMAIN_TRUST_HIGH: { weight: -3.5, codes: [ "127%.0%.%d%.3", "127%.0%.[02-9]%d%.3", "127%.0%.1[1-9]%.3", "127%.0%.[12]%d%d%.3" ] }
-      DNSWL_DOMAIN_REFUSED: { weight: 0, codes: [ "127%.0%.0%.255", "127%.0%.10%.%d+" ] }
-  - zone: bl.spameatingmonkey.net
-    symbol: SEM
-    weight: 1.0
-    ipv6: false
-  - zone: bl.ipv6.spameatingmonkey.net
-    symbol: SEM_IPV6
-    weight: 1.0
-    ipv4: false
-  - zone: bip.virusfree.cz
-    symbol: VIRUSFREE
-    weight: 0
-    returncodes:
-      VIRUSFREE_BOTNET: { weight: 2.0, codes: [ 127.0.0.2 ] }
-  - zone: bl.blocklist.de
-    symbol: BLOCKLIST_DE
-    weight: { CLIENT: 4.0, RECEIVED: 3.0 }
-    checks: [ from, received ]
-    prefixes: { from: CLIENT, received: RECEIVED }
+| Setting | Zone | Symbol | Checks |
+|---|---|---|---|
+| `dnsbl` | `zen.spamhaus.org` | `SPAMHAUS` | `from`, `received` |
+| `dnsbl` | `rep.mailspike.net` | `MAILSPIKE`, an allow-list | `from` |
+| `dnsbl` | `list.dnswl.org` | `DNSWL`, an allow-list | `from`, `received` |
+| `dnsbl` | `dwl.dnswl.org` | `DNSWL_DOMAIN` | `dkim` |
+| `dnsbl` | `bl.spameatingmonkey.net` | `SEM` | `from`, IPv4 |
+| `dnsbl` | `bl.ipv6.spameatingmonkey.net` | `SEM_IPV6` | `from`, IPv6 |
+| `dnsbl` | `bip.virusfree.cz` | `VIRUSFREE` | `from` |
+| `dnsbl` | `bl.blocklist.de` | `BLOCKLIST_DE` | `from`, `received` |
+| `uribl` | `ebl.msbl.org` | `MSBL_EMAIL` | `emails`, `replyto`, `from_smtp`, `from_mime`, hashed |
+| `uribl` | `email.rspamd.com` | `HASHED_EMAIL` | `emails`, `replyto`, `from_smtp`, `from_mime`, hashed |
+| `uribl` | `multi.surbl.org` | `SURBL` | all but `from` and `received` |
+| `uribl` | `multi.uribl.com` | `URIBL` | all but `from` and `received` |
+| `uribl` | `uribl.rspamd.com` | `HASHED_DOMAIN` | `emails`, `dkim`, `urls`, `content_urls`, hashed |
+| `uribl` | `dbl.spamhaus.org` | `SPAMHAUS_DOMAIN` | all but `from` and `received` |
+| `uribl` | `uribl.spameatingmonkey.net` | `SEM_DOMAIN` | `emails`, `dkim`, `urls`, `content_urls`, `from_smtp`, `from_mime`, `mid` |
+| `uribl` | `fresh15.spameatingmonkey.net` | `SEM_NEW_DOMAIN` | the same |
 
-uribl:
-  - zone: ebl.msbl.org
-    symbol: MSBL_EMAIL
-    weight: 7.5
-    checks: [ emails, replyto, from_smtp, from_mime ]
-    unknown: false
-    exclude_users: false
-    exclude_local: false
-    hash: sha1
-    ignore_whitelist: true
-    returncodes:
-      MSBL_EMAIL_SPAM: { weight: 7.5, codes: [ 127.0.0.2, 127.0.0.3 ] }
-      MSBL_EMAIL_SUSPECT: { weight: 0.5, codes: [ 127.0.1.2, 127.0.1.3 ] }
-  - zone: multi.surbl.org
-    symbol: SURBL
-    weight: 0
-    checks: [ emails, dkim, helo, rdns, replyto, urls, content_urls, from_smtp, from_mime, mid ]
-    unknown: false
-    exclude_users: false
-    exclude_local: false
-    url_full_hostname: true
-    emails_domainonly: true
-    dkim_domainonly: false
-    returnbits:
-      SURBL_HACKED_SITE: { weight: 5.0, bit: 128 }
-      SURBL_ABUSE: { weight: 5.0, bit: 64 }
-      SURBL_CLICK_TRACKER: { weight: 0, bit: 32 }
-      SURBL_MALWARE: { weight: 7.5, bit: 16 }
-      SURBL_PHISHING: { weight: 7.5, bit: 8 }
-      SURBL_DISPOSABLE_MAIL: { weight: 0, bit: 4 }
-      SURBL_REFUSED: { weight: 0, bit: 1 }
-  - zone: multi.uribl.com
-    symbol: URIBL
-    weight: 0
-    checks: [ emails, dkim, helo, rdns, replyto, urls, content_urls, from_smtp, from_mime, mid ]
-    unknown: false
-    exclude_users: false
-    exclude_local: false
-    emails_domainonly: true
-    dkim_domainonly: false
-    returnbits:
-      URIBL_REFUSED: { weight: 0, bit: 1 }
-      URIBL_SPAM: { weight: 7.5, bit: 2 }
-      URIBL_SUSPECT: { weight: 2.5, bit: 4 }
-      URIBL_WATCHED: { weight: 0.5, bit: 8 }
-  - zone: dbl.spamhaus.org
-    symbol: SPAMHAUS_DOMAIN
-    weight: 0
-    checks: [ emails, dkim, helo, rdns, replyto, urls, content_urls, from_smtp, from_mime, mid ]
-    unknown: false
-    exclude_users: false
-    exclude_local: false
-    no_ip: true
-    emails_domainonly: true
-    dkim_domainonly: false
-    returncodes:
-      SPAMHAUS_DOMAIN_SPAM: { weight: 6.5, codes: [ 127.0.1.2 ] }
-      SPAMHAUS_DOMAIN_PHISHING: { weight: 7.5, codes: [ 127.0.1.4 ] }
-      SPAMHAUS_DOMAIN_MALWARE: { weight: 7.5, codes: [ 127.0.1.5 ] }
-      SPAMHAUS_DOMAIN_BOTNET: { weight: 7.5, codes: [ 127.0.1.6 ] }
-      SPAMHAUS_ABUSED_SPAM: { weight: 5.0, codes: [ 127.0.1.102 ] }
-      SPAMHAUS_ABUSED_REDIRECTOR: { weight: 5.0, codes: [ 127.0.1.103 ] }
-      SPAMHAUS_ABUSED_PHISHING: { weight: 6.5, codes: [ 127.0.1.104 ] }
-      SPAMHAUS_ABUSED_MALWARE: { weight: 6.5, codes: [ 127.0.1.105 ] }
-      SPAMHAUS_ABUSED_BOTNET: { weight: 6.5, codes: [ 127.0.1.106 ] }
-      SPAMHAUS_DOMAIN_PROHIBITED: { weight: 0, codes: [ 127.0.1.255 ] }
-      SPAMHAUS_DOMAIN_REFUSED_RESOLVER: { weight: 0, codes: [ 127.255.255.254 ] }
-      SPAMHAUS_DOMAIN_REFUSED: { weight: 0, codes: [ 127.255.255.255 ] }
-  - zone: uribl.spameatingmonkey.net
-    symbol: SEM_DOMAIN
-    weight: 0
-    checks: [ emails, dkim, urls, content_urls, from_smtp, from_mime, mid ]
-    unknown: false
-    exclude_users: false
-    exclude_local: false
-    no_ip: true
-    emails_domainonly: true
-    dkim_domainonly: false
-    returnbits:
-      SEM_DOMAIN_SPAM: { weight: 3.5, bit: 2 }
-  - zone: fresh15.spameatingmonkey.net
-    symbol: SEM_NEW_DOMAIN
-    weight: 0
-    checks: [ emails, dkim, urls, content_urls, from_smtp, from_mime, mid ]
-    unknown: false
-    exclude_local: false
-    no_ip: true
-    emails_domainonly: true
-    dkim_domainonly: false
-    returnbits:
-      SEM_NEW_DOMAIN_SPAM: { weight: 3.0, bit: 2 }
-```
-
-- Spamhaus refuses queries that reach it through a public resolver, such as 8.8.8.8 or 1.1.1.1, and queries over its free volume, and answers them with `127.255.255.254` and `127.255.255.255`. These fire the `REFUSED` symbols, which weigh nothing, so a refused list scores no mail. Use a resolver of your own, or Spamhaus's Data Query Service with its key in the zone: `<key>.zen.dq.spamhaus.net` and `<key>.dbl.dq.spamhaus.net`. SURBL and URIBL answer a refused query with their `REFUSED` bit, and DNSWL with `DNSWL_REFUSED`, which also weigh nothing.
+- A list of your own replaces the recommended set for that setting whole. To keep one of the recommended lists beside your own, copy it from the file.
+- `HASHED_DOMAIN` is not asked about the registrable domains of the senders and the Message-ID, which mailscore asks only whole. SURBL's hashbl is left out too, see below.
+- Spamhaus refuses queries that reach it through a public resolver, such as 8.8.8.8 or 1.1.1.1, and queries over its free volume, and answers them with `127.255.255.254` and `127.255.255.255`. These fire the `REFUSED` symbols, which weigh nothing, so a refused list scores no mail. Use a resolver of your own, or Spamhaus's Data Query Service with its key in the zone: `<key>.zen.dq.spamhaus.net` and `<key>.dbl.dq.spamhaus.net`. SURBL and URIBL answer a refused query with their `REFUSED` bit, and DNSWL with `DNSWL_REFUSED`, which also weigh nothing. Keep these at 0 in a list of your own.
 
 ## What mailscore does not ask
 
@@ -259,5 +120,3 @@ mailscore fetches nothing over HTTP, and asks only what it reads from the messag
 - When a message has more than 64 domains, it asks the first 64 it finds.
 - It asks every zone, with no background check of whether a zone still answers, and leaves a refusal to the `REFUSED` codes.
 - It reads the address in a Received header's first comment, or after `from`, which covers the common Received formats.
-
-Lists of domains and of whole addresses hashed with blake2 in base32 are not in the example, but mailscore can ask lists of that kind.

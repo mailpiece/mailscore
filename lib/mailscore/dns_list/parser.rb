@@ -1,9 +1,11 @@
 require "ipaddr"
+require "yaml"
 
 module MailScore
   class DnsList
     # Reads the +dnsbl+ and +uribl+ settings into lists, raising ConfigError
-    # for anything malformed or a symbol named twice.
+    # for anything malformed or a symbol named twice. +recommended+ is the
+    # bundled set of lists.
     module Parser
       SYMBOL = /\A[A-Z][A-Z0-9_]*\z/
       SWITCHES = { "unknown" => true, "ipv4" => true, "ipv6" => true, "no_ip" => false, "url_full_hostname" => false,
@@ -12,9 +14,11 @@ module MailScore
       REQUESTS_LIMIT = 64
       HASHES = %w[ md5 sha1 sha256 sha384 sha512 blake2 ].freeze
       HASH_FORMATS = %w[ hex base32 base64 ].freeze
+      RECOMMENDED = YAML.safe_load_file(File.join(__dir__, "recommended.yml")).freeze
 
       def self.parse(lists, key, checks:)
-        raise ConfigError, "#{key} must be a list of zones" unless lists.is_a?(Array)
+        lists = RECOMMENDED.fetch(key) if lists == "recommended"
+        raise ConfigError, "#{key} must be recommended or a list of zones" unless lists.is_a?(Array)
 
         lists = lists.each_with_index.map { |list, index| list(list, "#{key}[#{index}]", checks) }
         symbols = lists.flat_map { it.symbols.keys }
