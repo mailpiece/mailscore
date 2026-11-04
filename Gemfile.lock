@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/mailpiece/mailauth.git
-  revision: 0f26999e693103ff8e29af4ab5d13ba09dea959b
+  revision: 3ebad9d206b1cba8f0b189ae47330021c9e2d913
   branch: main
   specs:
     mailauth (0.6.0)
@@ -10,7 +10,7 @@ GIT
 
 GIT
   remote: https://github.com/mailpiece/mailresolver.git
-  revision: 3e759a98711cd59a8320a350bc8371e0745987a3
+  revision: ed45ec0f81d2bc7cda710c9da1cbb08eb927f5fe
   branch: main
   specs:
     mailresolver (0.6.0)
