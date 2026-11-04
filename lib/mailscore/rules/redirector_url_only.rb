@@ -7,10 +7,8 @@ module MailScore
       WEIGHT = 1.0
       DESCRIPTION = "The message is only a shortened link"
 
-      SHORTENERS = %w[ 1url.com adf.ly amzn.to bit.do bit.ly clck.ru cli.gs dlvr.it fb.me goo.gl is.gd lnkd.in ow.ly su.pr t.co tiny.cc tinyurl.com tr.im wp.me ].freeze
-
       def run(message, _envelope)
-        if (url = UrlOnly.url(message.content)) && url.within?(SHORTENERS)
+        if (url = UrlOnly.url(message.content)) && url.within?(@config.shorteners)
           Hit.new(name: NAME, weight: WEIGHT, detail: url.host)
         end
       end

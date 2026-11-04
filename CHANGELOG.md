@@ -4,6 +4,10 @@
 
 - `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group
 - `scores` sets any symbol's weight, or switches it off
+- Shorteners, trusted redirectors, risky and archive extensions are bundled files a setting replaces
+- The shorteners and trusted redirectors lists take the hosts of the sources credited in NOTICE
+- SHORTENED_LINK_ONLY fires on 247 shorteners, not 19, and LINK_TEXT_MISMATCH no longer on a link through one
+- A list file replaced at runtime is read again within 30 seconds
 - `dnsbl: recommended` and `uribl: recommended` ask a bundled set of DNS lists
 - Each DNS list is probed for a name it should not list and skipped while it lists it
 

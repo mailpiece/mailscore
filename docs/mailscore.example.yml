@@ -78,4 +78,8 @@
 # fasttext_max_samples: 5000        # samples kept per class, the newest
 # fasttext_sample_expiry: 7776000   # seconds a sample is kept after its learn
 # fasttext_train_every: 86400       # seconds between trainings
+# shorteners: /etc/mailscore/shorteners.txt # URL shorteners, a host a line; the bundled list by default
+# trusted_redirectors: /etc/mailscore/trusted_redirectors.txt # link wrappers LINK_TEXT_MISMATCH trusts; the bundled list by default
+# risky_extensions: /etc/mailscore/risky_extensions.txt # attachment extensions that run code; the bundled list by default
+# archive_extensions: /etc/mailscore/archive_extensions.txt # archives flagged inside a zip; the bundled list by default
 # log_level: info                   # debug, info, warn or error

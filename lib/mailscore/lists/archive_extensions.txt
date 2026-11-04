@@ -1,0 +1,12 @@
+# Archive extensions, one a line.
+7z
+ace
+alz
+arj
+bz2
+cab
+egg
+lz
+rar
+xz
+zip

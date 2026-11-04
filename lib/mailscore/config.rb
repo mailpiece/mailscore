@@ -3,6 +3,7 @@ require "ipaddr"
 require "maxmind/db"
 require "yaml"
 require "mailscore/error"
+require "mailscore/list"
 require "mailscore/dns_list"
 require "mailscore/dns_list/parser"
 require "mailscore/dns_list/candidates"
@@ -23,7 +24,8 @@ module MailScore
   # +trap_fuzzy_flag+ is a fuzzy flag or nil. +dnsbl+ and +uribl+ are lists
   # of DnsList, empty by default. +nameservers+ lists addresses and host
   # names, or is nil for the system resolver. +language_model+ is a path, or
-  # nil for none.
+  # nil for none. +shorteners+, +trusted_redirectors+, +risky_extensions+ and
+  # +archive_extensions+ are each a List, the bundled file by default.
   Config = Data.define(:database, :bind, :port, :workers, :message_size_cap, :scan_budget, :thresholds, :scores, :groups,
     :regexp_timeout, :database_busy_timeout, :expire_every, :subject_template, :soft_reject_on_timeout,
     :date_future_margin, :date_past_margin, :greylist_timeout, :greylist_expiry, :local_networks,
@@ -32,13 +34,14 @@ module MailScore
     :bayes_min_learns, :bayes_max_tokens, :language_model, :autolearn, :autolearn_spam_score, :autolearn_ham_score,
     :trap_addresses, :trap_fuzzy_flag, :trap_learn_spam, :trap_allow_multiple_rcpts, :dnsbl, :uribl,
     :nameservers, :nameservers_refresh, :fasttext, :fasttext_model, :fasttext_min_samples, :fasttext_max_samples, :fasttext_sample_expiry, :fasttext_train_every,
-    :log_level, :read_token, :write_token)
+    :shorteners, :trusted_redirectors, :risky_extensions, :archive_extensions, :log_level, :read_token, :write_token)
 
   class Config
     FuzzyFlag = Data.define(:symbol, :weight, :hits_limit)
     Group = Data.define(:max_score, :min_score)
 
     PATH = "/etc/mailscore.yml"
+    LISTS = File.join(__dir__, "lists")
     # Lowest first, each a score or off.
     ACTIONS = { "greylist" => 4, "add_header" => 6, "rewrite_subject" => false, "soft_reject" => false, "reject" => 15 }.freeze
     # The groups capped by default, and their caps.
@@ -99,6 +102,10 @@ module MailScore
       "fasttext_max_samples" => 5000,
       "fasttext_sample_expiry" => 7_776_000,
       "fasttext_train_every" => 86_400,
+      "shorteners" => File.join(LISTS, "shorteners.txt"),
+      "trusted_redirectors" => File.join(LISTS, "trusted_redirectors.txt"),
+      "risky_extensions" => File.join(LISTS, "risky_extensions.txt"),
+      "archive_extensions" => File.join(LISTS, "archive_extensions.txt"),
       "log_level" => "info"
     }.freeze
     KEYS = [ *DEFAULTS.keys, "fasttext_model" ].freeze
@@ -200,6 +207,10 @@ module MailScore
           fasttext_max_samples: max_samples,
           fasttext_sample_expiry: setting(settings["fasttext_sample_expiry"], "fasttext_sample_expiry", Numeric),
           fasttext_train_every: setting(settings["fasttext_train_every"], "fasttext_train_every", Numeric),
+          shorteners: list(settings["shorteners"], "shorteners"),
+          trusted_redirectors: list(settings["trusted_redirectors"], "trusted_redirectors"),
+          risky_extensions: list(settings["risky_extensions"], "risky_extensions"),
+          archive_extensions: list(settings["archive_extensions"], "archive_extensions"),
           log_level: log_level(settings["log_level"]),
           read_token: read_token || write_token,
           write_token: write_token || read_token
@@ -234,6 +245,13 @@ module MailScore
           value || nil
         rescue SystemCallError, MaxMind::DB::InvalidDatabaseError
           raise ConfigError, "#{key} must be a MaxMind DB file or off"
+        end
+
+        def list(value, key)
+          raise ConfigError, "#{key} must be a readable file" unless value.is_a?(String)
+          List.new(value)
+        rescue SystemCallError, ArgumentError
+          raise ConfigError, "#{key} must be a readable file"
         end
 
         def log_level(value)
