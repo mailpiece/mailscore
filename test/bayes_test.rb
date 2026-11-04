@@ -226,6 +226,18 @@ class MailScore::BayesTest < MailScore::TestCase
     assert_operator @bayes.probability(probe), :>, 0.5
   end
 
+  def test_the_minimum_strength_can_be_set
+    probe, bayes = probe_with_counts(6, 5, "bayes_min_prob_strength" => 0.01)
+
+    assert_operator bayes.probability(probe), :>, 0.5
+  end
+
+  def test_a_minimum_strength_of_0_keeps_every_token
+    probe, bayes = probe_with_counts(501, 500, "bayes_min_prob_strength" => 0)
+
+    assert_operator bayes.probability(probe), :>, 0.5
+  end
+
   def test_a_long_message_does_not_underflow
     train
     probability = @bayes.probability(mail("buy cheap viagra pills now save big " * 300))
@@ -244,6 +256,19 @@ class MailScore::BayesTest < MailScore::TestCase
     assert_nil @bayes.learn(short, "spam")
     assert_equal [ [ "ham", 3 ], [ "spam", 3 ] ], @database.execute("SELECT class, learns FROM bayes_totals ORDER BY class")
     assert @bayes.learn(enough, "ham")
+  end
+
+  def test_the_minimum_tokens_can_be_set
+    train
+    bayes = MailScore::Bayes.new(MailScore::Config.parse(SETTINGS.merge("bayes_min_learns" => 3, "bayes_min_tokens" => 10), env: TOKENS), @database)
+
+    refute_nil bayes.probability(mail("Buy cheap viagra pills now and save big"))
+  end
+
+  def test_a_minimum_of_0_tokens_learns_any_message
+    bayes = MailScore::Bayes.new(MailScore::Config.parse(SETTINGS.merge("bayes_min_tokens" => 0), env: TOKENS), @database)
+
+    assert bayes.learn(mail("Hi"), "ham")
   end
 
   def test_a_learn_is_heard_however_sure_the_classifier_already_is
@@ -355,6 +380,13 @@ class MailScore::BayesTest < MailScore::TestCase
     def autolearning
       settings = SETTINGS.merge("bayes_min_learns" => 3, "autolearn" => true, "autolearn_spam_score" => 10, "autolearn_ham_score" => -1)
       MailScore::Bayes.new(MailScore::Config.parse(settings, env: TOKENS), @database)
+    end
+
+    def probe_with_counts(spam, ham, settings)
+      train
+      probe = mail("common words appear everywhere in all mail sent daily across offices", subject: "unseen thing", from: "x@unseen.example")
+      MailScore::Bayes::Tokens.of(probe).each { @database.execute("INSERT OR REPLACE INTO bayes_tokens VALUES (?, ?, ?)", it, spam, ham) }
+      [ probe, MailScore::Bayes.new(MailScore::Config.parse(SETTINGS.merge("bayes_min_learns" => 3, **settings), env: TOKENS), @database) ]
     end
 
     def envelope(headers = { "HTTP_IP" => "203.0.113.9" })

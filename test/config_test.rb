@@ -184,6 +184,14 @@ class MailScore::ConfigTest < MailScore::TestCase
     assert_equal 1_000_000, parse(SETTINGS).bayes_max_tokens
   end
 
+  def test_bayes_token_limits_can_be_tuned
+    assert_equal [ 11, 0.05 ], parse(SETTINGS).to_h.values_at(:bayes_min_tokens, :bayes_min_prob_strength)
+    assert_equal [ 20, 0.1 ], parse(SETTINGS.merge("bayes_min_tokens" => 20, "bayes_min_prob_strength" => 0.1)).to_h.values_at(:bayes_min_tokens, :bayes_min_prob_strength)
+    assert_equal [ 0, 0 ], parse(SETTINGS.merge("bayes_min_tokens" => 0, "bayes_min_prob_strength" => 0)).to_h.values_at(:bayes_min_tokens, :bayes_min_prob_strength)
+    assert_equal "bayes_min_tokens must be 0 or a positive integer", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("bayes_min_tokens" => 1.5)) }.message
+    assert_equal "bayes_min_prob_strength must be 0 or a positive number", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("bayes_min_prob_strength" => -0.1)) }.message
+  end
+
   def test_bayes_has_no_language_model_by_default
     assert_nil parse(SETTINGS).language_model
     assert_equal "/data/lid.176.ftz", parse(SETTINGS.merge("language_model" => "/data/lid.176.ftz")).language_model
@@ -369,6 +377,7 @@ class MailScore::ConfigTest < MailScore::TestCase
     config = parse(SETTINGS)
 
     assert_equal [ [], nil, false, false ], config.to_h.values_at(:trap_addresses, :trap_fuzzy_flag, :trap_learn_spam, :trap_allow_multiple_rcpts)
+    assert_equal 10, config.trap_fuzzy_weight
   end
 
   def test_traps_can_be_set
@@ -386,6 +395,7 @@ class MailScore::ConfigTest < MailScore::TestCase
     assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_fuzzy_flag" => true)) }
     assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_learn_spam" => "yes")) }
     assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_allow_multiple_rcpts" => "yes")) }
+    assert_equal "trap_fuzzy_weight must be a positive integer", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_fuzzy_weight" => 0)) }.message
   end
 
   def test_the_fuzzy_threshold_is_from_a_half_to_one

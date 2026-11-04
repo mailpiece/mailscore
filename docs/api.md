@@ -216,14 +216,14 @@ Teach the Bayes classifier. There is one, for all mail. The body is the raw mess
 
 - `200` and `{"learned": true}` when learned.
 - The same message learned again as the same class: `208` and `{"error": "already_learned"}`.
-- A message with fewer than 11 tokens is too short to learn: `204` with no body, and nothing is learned.
+- A message with fewer than `bayes_min_tokens` tokens, 11 by default, is too short to learn: `204` with no body, and nothing is learned.
 - The same message learned as the other class is relearned: its counts move to the new class.
 - A message is known by a digest of its Bayes tokens, so headers the caller added since the scan, and changes the tokens do not see, such as case and punctuation, do not matter.
 - The read token gets `401`.
 - There is no unlearn endpoint.
 - A learn is always heard, however sure the classifier already is: a person correcting the filter is never turned away.
 
-In `/check`, once each class has the minimum learns (200), the classifier fires `BAYES_SPAM`, up to 5.1, or `BAYES_HAM`, down to -3.0. The weight is the full weight times the eighth power of the confidence, `(p - 0.5) * 2` for the class named, so only a near-certain call weighs much, and nothing fires within 0.05 of even, or for a message with fewer than 11 tokens. A token counts only once it has appeared in at least 2 learned messages, of either class, so with few learns a message whose tokens are still new leaves Bayes silent, even past `bayes_min_learns`. The detail is the confidence, such as `90.00%`. The classifier reads orthogonal sparse bigrams of the Subject and of each text part on its own, with Robinson's token probabilities and Fisher's method to combine them. With `language_model` set to a fastText language identification model you supply, such as `lid.176.ftz` (CC BY-SA 3.0, not shipped), each part's words are stemmed with Snowball for the language it detects, and the Subject's for the first part's, and a stop word of any language Snowball lists is dropped; without it, every part is taken as English.
+In `/check`, once each class has the minimum learns (200), the classifier fires `BAYES_SPAM`, up to 5.1, or `BAYES_HAM`, down to -3.0. The weight is the full weight times the eighth power of the confidence, `(p - 0.5) * 2` for the class named, so only a near-certain call weighs much, and nothing fires within 0.05 of even, or for a message with fewer than `bayes_min_tokens` tokens, 11 by default. A token counts only once it has appeared in at least 2 learned messages, of either class, so with few learns a message whose tokens are still new leaves Bayes silent, even past `bayes_min_learns`. The detail is the confidence, such as `90.00%`. The classifier reads orthogonal sparse bigrams of the Subject and of each text part on its own, with Robinson's token probabilities and Fisher's method to combine them. With `language_model` set to a fastText language identification model you supply, such as `lid.176.ftz` (CC BY-SA 3.0, not shipped), each part's words are stemmed with Snowball for the language it detects, and the Subject's for the first part's, and a stop word of any language Snowball lists is dropped; without it, every part is taken as English.
 
 With `fasttext` on, every learn, by hand, by autolearn or by a trap, also keeps the words of the message, its Subject then its text up to 1,000, to train the fastText model on. A scan alone keeps nothing.
 
@@ -235,7 +235,7 @@ Autolearn exists and is off by default. When on, it learns spam above the reject
 
 Trap addresses are a setting, off by default. When on, mail to a trap can:
 
-- add its fuzzy hashes, as 10 reports in one, and
+- add its fuzzy hashes, as `trap_fuzzy_weight` reports in one, 10 by default, and
 - be learned as spam.
 
 Each is a separate switch, off by default. Both skip mail from local networks and authenticated senders.

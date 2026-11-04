@@ -10,6 +10,7 @@ module MailScore
         "emails_domainonly" => false, "dkim_domainonly" => true, "is_whitelist" => false, "ignore_whitelist" => false,
         "exclude_users" => true, "exclude_local" => true }.freeze
       REQUESTS_LIMIT = 64
+      RECEIVED_MAX_POS = 5
       HASHES = %w[ md5 sha1 sha256 sha384 sha512 blake2 ].freeze
       HASH_FORMATS = %w[ hex base32 base64 ].freeze
 
@@ -26,7 +27,7 @@ module MailScore
         raise ConfigError, "#{name} must be a mapping" unless list.is_a?(Hash)
 
         required = %w[ zone symbol weight ]
-        optional = %w[ returncodes returnbits whitelist_exception checks requests_limit prefixes hash hash_len hash_format emails_delimiter ] + SWITCHES.keys
+        optional = %w[ returncodes returnbits whitelist_exception checks requests_limit received_max_pos prefixes hash hash_len hash_format emails_delimiter ] + SWITCHES.keys
         if (unknown = list.keys - required - optional).any?
           raise ConfigError, "unknown #{name} setting: #{unknown.join(", ")}"
         end
@@ -54,6 +55,7 @@ module MailScore
           hash_format: one_of(list.fetch("hash_format", "hex"), HASH_FORMATS, "#{name}.hash_format"),
           emails_delimiter: list["emails_delimiter"].nil? ? nil : delimiter(list["emails_delimiter"], "#{name}.emails_delimiter"),
           requests_limit: limit(list.fetch("requests_limit", REQUESTS_LIMIT), "#{name}.requests_limit"),
+          received_max_pos: limit(list.fetch("received_max_pos", RECEIVED_MAX_POS), "#{name}.received_max_pos"),
           **SWITCHES.to_h { |switch, default| [ switch.to_sym, switch(list.fetch(switch, default), "#{name}.#{switch}") ] }
       end
 
