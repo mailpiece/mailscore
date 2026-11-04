@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group
+- `scores` sets any symbol's weight, or switches it off
 
 ## 0.1.1
 

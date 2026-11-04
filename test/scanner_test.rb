@@ -46,6 +46,17 @@ class MailScore::ScannerTest < MailScore::TestCase
     end
   end
 
+  class HalfRule < MailScore::Rule
+    NAME = "HALF"
+    GROUP = "hfilter"
+    WEIGHT = 4
+    DESCRIPTION = "Fires at half its weight"
+
+    def run(_message, _envelope)
+      MailScore::Hit.new(name: NAME, weight: WEIGHT / 2.0)
+    end
+  end
+
   class StoredRule < MailScore::Rule
     NAME = "STORED"
     GROUP = "hfilter"
@@ -331,6 +342,60 @@ class MailScore::ScannerTest < MailScore::TestCase
     assert_equal 1.0, verdict.score
   end
 
+  def test_a_score_replaces_a_symbols_weight_and_off_drops_it
+    verdict = check("FIVE TWO", scores: { "FIVE" => 1, "TWO" => false })
+
+    assert_equal [ [ "FIVE", 1.0 ] ], verdict.hits.map { [ it.name, it.weight ] }
+    assert_equal 1.0, verdict.score
+    assert_equal "no_action", verdict.action
+    assert_equal "reject", check("TWO", scores: { "TWO" => 20 }).action
+  end
+
+  def test_a_score_scales_as_the_rule_scaled_the_default
+    assert_equal [ 3.0, 2.0 ], check("FIVE", rules: [ HalfRule, PairRule ], scores: { "HALF" => 6, "LEFT" => 2, "RIGHT" => false }).hits.map(&:weight)
+  end
+
+  def test_a_score_weighs_the_scanners_own_symbols
+    verdict = check("FIVE TWO", rules: [ RULES[0], SlowRule, RULES[1] ], scan_budget: 0.05, scores: { "SCAN_TIMED_OUT" => 0.5 })
+
+    assert_equal [ [ "FIVE", 5.0 ], [ "SCAN_TIMED_OUT", 0.5 ] ], verdict.hits.map { [ it.name, it.weight ] }
+    assert_equal 5.5, verdict.score
+  end
+
+  def test_a_score_weighs_a_reputation_hit
+    reputation = Object.new
+    def reputation.hits(*) = [ MailScore::Hit.new(name: "IP_REPUTATION_SPAM", weight: 1.5) ]
+
+    assert_equal [ 3.0 ], check("", reputation:, scores: { "IP_REPUTATION_SPAM" => 6 }).hits.map(&:weight)
+  end
+
+  def test_a_score_weighs_a_failed_scan
+    config = MailScore::Config.parse(SETTINGS.merge("scores" => { "SCAN_ERROR" => 1 }), env: TOKENS)
+    verdict = MailScore::Scanner.new(config, rules: RULES, stats: @stats).failed(MailScore::Message.new("Subject: x\n\nbody"))
+
+    assert_equal [ [ "SCAN_ERROR", 1.0 ] ], verdict.hits.map { [ it.name, it.weight ] }
+  end
+
+  def test_a_group_caps_the_weights_in_use
+    rules = [ self.class.rule("FIVE", 5, "headers"), self.class.rule("TWO", 2, "headers") ]
+    verdict = check("FIVE TWO", rules:, scores: { "FIVE" => 6, "TWO" => 6 })
+
+    assert_equal [ 6.0, 2.0 ], verdict.hits.map(&:weight)
+    assert_equal 8.0, verdict.score
+  end
+
+  def test_a_score_for_an_unknown_symbol_fails
+    error = assert_raises(MailScore::ConfigError) { check("FIVE", scores: { "FIVE" => 1, "SIX" => 6, "GREYLISTED" => 1 }) }
+
+    assert_equal "unknown symbol in scores: SIX, GREYLISTED", error.message
+  end
+
+  def test_an_unknown_group_fails
+    error = assert_raises(MailScore::ConfigError) { check("FIVE", groups: { "uribl" => { "max_score" => 12.5 } }) }
+
+    assert_equal "unknown group: uribl", error.message
+  end
+
   def test_every_rule_is_built_with_the_config_and_the_database
     assert_equal [ 8, 1 ], check("", rules: [ StoredRule ]).hits.first.detail
   end
@@ -344,10 +409,10 @@ class MailScore::ScannerTest < MailScore::TestCase
   end
 
   private
-    def check(subject, actions: SETTINGS["actions"], greylister: nil, rules: RULES, **settings)
+    def check(subject, actions: SETTINGS["actions"], greylister: nil, reputation: nil, rules: RULES, **settings)
       config = MailScore::Config.parse(SETTINGS.merge("actions" => actions, **settings.transform_keys(&:to_s)), env: TOKENS)
       message = MailScore::Message.new("Subject: #{subject}\n\nbody")
-      scanner = MailScore::Scanner.new(config, rules:, stats: @stats, greylister:, database: @database)
+      scanner = MailScore::Scanner.new(config, rules:, stats: @stats, greylister:, reputation:, database: @database)
       scanner.check(message, MailScore::Envelope.read({}, message))
     end
 end
