@@ -46,9 +46,10 @@ module MailScore
         Url.homograph?(host)
       end
 
-      # Whether the host is one of +domains+ or below one.
+      # Whether the host is one of +domains+ or below one, looked up a suffix at a time.
       def within?(domains)
-        domains.any? { host == it || host.end_with?(".#{it}") }
+        labels = host.split(".", -1)
+        labels.each_index.any? { domains.include?(labels.drop(it).join(".")) }
       end
     end
   end
