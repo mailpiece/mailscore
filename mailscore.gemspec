@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
     "CHANGELOG.md",
     "README.md",
     "LICENSE",
+    "LICENSES/*",
     "NOTICE",
     "mailscore.gemspec"
   ]
