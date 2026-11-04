@@ -95,6 +95,25 @@ class MailScore::AppTest < MailScore::TestCase
     assert_equal 0.0, answer["symbols"].find { it["name"] == "GREYLISTED" }["weight"]
   end
 
+  def test_symbols_lists_the_weight_in_use_and_marks_one_switched_off
+    config = MailScore::Config.parse(SETTINGS.merge("scores" => { "EXAMPLE" => 2, "SCAN_ERROR" => false }), env: TOKENS)
+    @app = MailScore::App.new(config, database: @database, rules: [ ExampleRule ])
+    symbols = JSON.parse(get("/symbols").body)
+
+    assert_equal({ "name" => "EXAMPLE", "weight" => 2.0, "description" => "Fires on example mail", "group" => "hfilter" }, symbols.first)
+    assert_equal({ "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "Scan failed", "group" => "scan", "disabled" => true }, symbols.last)
+  end
+
+  def test_a_score_reaches_the_verdict_reputation_and_autolearn
+    settings = SETTINGS.merge("autolearn" => true, "autolearn_spam_score" => 1, "autolearn_ham_score" => -1, "scores" => { "EXAMPLE" => -2 })
+    @app = MailScore::App.new(MailScore::Config.parse(settings, env: TOKENS), database: @database, rules: [ ExampleRule ])
+    answer = JSON.parse(check("Subject: an example\n\n#{WORDS}", "HTTP_IP" => "203.0.113.9").body)
+
+    assert_equal [ -2.0, [ -2.0 ] ], [ answer["score"], answer["symbols"].map { it["weight"] } ]
+    assert_equal [ [ -2.0 ] ], @database.execute("SELECT score FROM reputation")
+    assert_equal [ [ "ham" ] ], @database.execute("SELECT class FROM bayes_learned")
+  end
+
   def test_check_records_the_clients_reputation
     check("Subject: an example\n\nbody", "HTTP_IP" => "203.0.113.9")
 

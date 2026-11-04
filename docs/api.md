@@ -66,6 +66,7 @@ Response, one verdict for the message:
 
 - `score` is the sum of the fired symbols' weights, each within its group's cap; see [Groups](#groups).
 - Every score, weight and threshold is a float, such as `0.0` or `12.0`, here and in `/symbols`, however the config writes it.
+- `scores` sets a symbol's weight, or switches it off so it never fires. A symbol that fires at part of its weight, such as Bayes by its confidence, fires at the same part of the new one. The score, the action, reputation and autolearn all count the weight in use. A symbol switched off is gone entirely, so `off` on `DKIM_PASS` or `SPF_PASS` also stops DKIM or SPF reputation and `off` on `BAYES_SPAM` or `BAYES_HAM` stops autolearn seeing Bayes's call; to drop only the weight, set it to 0. `GREYLISTED` has no score: switch greylisting off with `actions`.
 - `symbols` lists every symbol that fired. `name` is a symbol from `/symbols`, `weight` what it added to the score, `detail`, when present, what it fired on, and `description` the one `/symbols` gives it.
 - `complete` is false when the scan ran past its budget. See [Timeout](#timeout).
 - `smtp_reply` (`code`, `enhanced`, `text`) is present with `soft reject` and `reject`, and mailscore always sends one that is well formed: `code` is a 4xx with `soft reject` and a 5xx with `reject`, `enhanced` is `class.subject.detail` with the same class digit, and `text` is printable ASCII with no CR or LF, at most 200 characters. The caller uses its own reply for one that is not.
@@ -277,7 +278,7 @@ The flags are a setting, and these three are the default.
 - `ping`: no token. `200` and `pong` as plain text, for container health checks.
 - `health`: read token. `200` and `{"status": "ok", "version": "0.1.1"}` when the database opens. `503` otherwise.
 - `stats`: read token. Counters since start, such as scans per action, budget overruns, rule errors, scan errors, learns, autolearns and fuzzy matches. Never message content or addresses. Under `fasttext`, the model in place: its accuracy on held-out samples and the spam and ham samples it learned from, and the time of the last training, swapped in or not, as `{"trained_at": "2026-11-03T03:00:00Z", "accuracy": 0.97, "spam_samples": 4000, "ham_samples": 4000}`, with nulls before any.
-- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name", "group": "hfilter" } ]`. A description is a short label, such as "No reverse DNS for the sending server".
+- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name", "group": "hfilter" } ]`, each at the weight in use. A symbol `scores` switches off keeps its default weight and adds `"disabled": true`. A description is a short label, such as "No reverse DNS for the sending server".
 
 ## Errors
 

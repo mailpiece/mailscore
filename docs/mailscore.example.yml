@@ -15,6 +15,9 @@
 #   rewrite_subject: off
 #   soft_reject: off
 #   reject: 15
+# scores:                           # none by default; a weight, or off, for any symbol in /symbols
+#   SUBJECT_ALL_CAPS: off
+#   DMARC_PASS: -0.3
 # groups:                           # caps on what a symbol group adds, these by default; 0 is no cap
 #   headers: { max_score: 8 }
 #   subject: { max_score: 6 }

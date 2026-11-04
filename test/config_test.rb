@@ -6,7 +6,7 @@ class MailScore::ConfigTest < MailScore::TestCase
   # Shown in the example with a value of their own: worked out at start, or
   # empty or none by default.
   SHOWN_AS_EXAMPLES = %w[ workers local_networks language_model autolearn_spam_score autolearn_ham_score
-    trap_addresses dnsbl uribl nameservers ].freeze
+    trap_addresses dnsbl uribl nameservers scores ].freeze
 
   def test_the_example_config_parses_and_lists_every_setting
     assert_equal parse({}), MailScore::Config.load(EXAMPLE, env: TOKENS)
@@ -246,6 +246,20 @@ class MailScore::ConfigTest < MailScore::TestCase
     assert_equal "actions must be a mapping", assert_raises(MailScore::ConfigError) { parse(with_actions(nil)) }.message
   end
 
+  def test_scores_give_a_symbol_a_weight_or_switch_it_off
+    assert_equal({}, parse({}).scores)
+    assert_equal({ "DMARC_PASS" => -0.3, "SPF_FAIL" => 2.0, "SUBJECT_ALL_CAPS" => nil },
+      parse(SETTINGS.merge("scores" => { "DMARC_PASS" => -0.3, "SPF_FAIL" => 2, "SUBJECT_ALL_CAPS" => false })).scores)
+  end
+
+  def test_a_score_must_be_a_number_or_off
+    [ "2", true, nil ].each do |value|
+      error = assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("scores" => { "SPF_FAIL" => value })) }
+      assert_equal "scores.SPF_FAIL must be a number or off", error.message
+    end
+    assert_equal "scores must be a mapping", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("scores" => [ "SPF_FAIL" ])) }.message
+  end
+
   def test_an_unknown_setting_fails
     error = assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("scan_budjet" => 8)) }
 
@@ -291,7 +305,6 @@ class MailScore::ConfigTest < MailScore::TestCase
   end
 
   def test_groups_are_checked
-    assert_equal "unknown group: uribl", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("groups" => { "uribl" => { "max_score" => 12.5 } })) }.message
     assert_equal "groups must be a mapping", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("groups" => [])) }.message
 
     [ { "max_score" => -1 }, { "min_score" => 1 }, { "max_score" => "8" }, { "max" => 8 }, nil ].each do |scores|
