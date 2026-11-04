@@ -3,6 +3,7 @@ module MailScore
     # No From field, or an empty one.
     class MissingFrom < Rule
       NAME = "FROM_MISSING"
+      GROUP = "headers"
       WEIGHT = 2.0
       DESCRIPTION = "No From header"
 

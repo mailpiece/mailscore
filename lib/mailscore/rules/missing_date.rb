@@ -3,6 +3,7 @@ module MailScore
     # No Date field, or an empty one.
     class MissingDate < Rule
       NAME = "DATE_MISSING"
+      GROUP = "headers"
       WEIGHT = 1.0
       DESCRIPTION = "No Date header"
 

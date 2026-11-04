@@ -11,7 +11,7 @@ Most lists need an account, a key or both, and each has its own terms of use, us
 
 ## Settings
 
-Two settings list zones, and take the same keys. `dnsbl` is for lists about the client, and its zones ask about the client IP unless they say otherwise. `uribl` is for lists about domains, and its zones ask about URLs unless they say otherwise; together their symbols weigh at most 12.5 per message.
+Two settings list zones, and take the same keys. `dnsbl` is for lists about the client, and its zones ask about the client IP unless they say otherwise. `uribl` is for lists about domains, and its zones ask about URLs unless they say otherwise. `dnsbl` symbols are in the `rbl` group and `uribl` symbols in `surbl`, which by default weighs at most 12.5 per message; see [Groups](api.md#groups).
 
 ```yaml
 dnsbl:

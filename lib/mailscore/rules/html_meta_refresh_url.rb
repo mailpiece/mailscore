@@ -3,6 +3,7 @@ module MailScore
     # HTML that sends the reader to another page on its own.
     class HtmlMetaRefreshUrl < Rule
       NAME = "HTML_AUTO_REDIRECT"
+      GROUP = "html"
       WEIGHT = 5.0
       DESCRIPTION = "HTML redirects to a link on opening"
 

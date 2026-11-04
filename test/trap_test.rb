@@ -99,7 +99,7 @@ class MailScore::TrapTest < MailScore::TestCase
   end
 
   def test_symbols_lists_trap
-    assert_includes JSON.parse(get(app({}), "/symbols").body), { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" }
+    assert_includes JSON.parse(get(app({}), "/symbols").body), { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address", "group" => "trap" }
   end
 
   private

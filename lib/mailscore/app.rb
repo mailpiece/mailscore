@@ -24,13 +24,12 @@ module MailScore
       @config = config
       @database = database
       @stats = Stats.new(database)
-      @rules = rules
       @scanner = Scanner.new(config, rules:, stats: @stats, greylister:, reputation:, database:)
       @fuzzy = Fuzzy.new(config, database)
       @bayes = Bayes.new(config, database)
       @trap = Trap.new(config, database)
       @reputation = reputation
-      @catalogue = Rules.catalogue([ *@rules, Limits, Reputation, Greylister, Scanner ], config:)
+      @catalogue = @scanner.catalogue
       @descriptions = @catalogue.to_h { [ it[:name], it[:description] ] }
     end
 

@@ -12,6 +12,7 @@ module MailScore
   # messages. Learning does not feed reputation yet; it would call +record+.
   class Reputation
     NAME = "REPUTATION"
+    GROUP = "reputation"
 
     SYMBOLS = {
       "IP_REPUTATION_SPAM" => [ 3.0, "Sending IP mostly sends spam" ],

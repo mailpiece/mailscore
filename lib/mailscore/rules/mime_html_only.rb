@@ -3,6 +3,7 @@ module MailScore
     # HTML with no plain text alternative.
     class MimeHtmlOnly < Rule
       NAME = "HTML_ONLY"
+      GROUP = "headers"
       WEIGHT = 0.2
       DESCRIPTION = "HTML with no plain text part"
 

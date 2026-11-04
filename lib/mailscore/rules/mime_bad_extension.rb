@@ -3,6 +3,7 @@ module MailScore
     # An attachment, or a file named inside a zip, that runs code when opened.
     class MimeBadExtension < Rule
       NAME = "ATTACHMENT_RISKY_EXTENSION"
+      GROUP = "mime_types"
       WEIGHT = 2.0
       DESCRIPTION = "Risky attachment type"
 

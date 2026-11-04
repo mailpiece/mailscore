@@ -31,7 +31,8 @@ module MailScore
   # +ERROR+ symbol when it has one. The caps the
   # message reached fire after the rules, and reputation scores after them;
   # App records it after the verdict. A scan that raises gets the +failed+
-  # verdict instead: incomplete, with SCAN_ERROR.
+  # verdict instead: incomplete, with SCAN_ERROR. Before the action, each
+  # symbol group's max_score and min_score bound what its hits add.
   #
   # Both weigh 3.0, about what one of the late rules, a DNS list, Bayes or
   # fastText, adds for spam, so a message cannot score low by slowing the
@@ -40,10 +41,14 @@ module MailScore
   # against the message, they greylist it, and the retry is scanned afresh.
   class Scanner
     NAME = "SCANNER"
+    GROUP = "scan"
     SYMBOLS = {
       "SCAN_TIMED_OUT" => [ 3.0, "Scan ran out of time" ],
       "SCAN_ERROR" => [ 3.0, "Scan failed" ]
     }.freeze
+
+    # Every symbol a scan may fire, as /symbols lists them.
+    attr_reader :catalogue
 
     def initialize(config, rules:, stats:, greylister: nil, reputation: nil, database: nil)
       @config = config
@@ -52,12 +57,15 @@ module MailScore
       @greylister = greylister
       @reputation = reputation
       @database = database
+      @catalogue = Rules.catalogue(Rules.scanned(rules), config:)
+      @groups = @catalogue.to_h { [ it[:name], it[:group] ] }
     end
 
     def check(message, envelope)
       hits, complete = run(message, envelope)
       hits.concat(Limits.hits(message))
       hits.concat(@reputation.hits(message, envelope, hits)) if @reputation
+      hits = capped(hits)
       action = action_for(hits, complete)
 
       # Greylisting hook: greylist(message, envelope, action) returns nil to step aside, or [action, hit].
@@ -70,7 +78,7 @@ module MailScore
     end
 
     def failed(message)
-      hits = [ hit("SCAN_ERROR") ]
+      hits = capped([ hit("SCAN_ERROR") ])
       action = action_for(hits, false)
       verdict(action.nil? || action == "greylist" ? "no_action" : action, hits, false, message)
     end
@@ -113,6 +121,33 @@ module MailScore
       def greylisting?(action, hits)
         threshold = @config.thresholds["greylist"]
         threshold && action != "reject" && score_of(hits) >= threshold
+      end
+
+      # Group caps, in the order the hits fired: a hit that takes its
+      # group's total past max_score, or a negative total below min_score,
+      # adds what is left, and later hits of its sign add 0.
+      def capped(hits)
+        totals = Hash.new(0.0)
+
+        hits.map do |hit|
+          group = @groups[hit.name]
+          weight = within(@config.groups[group], totals[group], hit.weight)
+          totals[group] += weight
+          weight == hit.weight ? hit : hit.with(weight:)
+        end
+      end
+
+      # A cap of 0, or none, is no cap. What is left is rounded.
+      def within(group, total, weight)
+        max, min = group&.max_score, group&.min_score
+
+        if weight.positive? && max&.positive?
+          [ weight, (max - total).round(2) ].min.clamp(0.0..)
+        elsif weight.negative? && min&.negative?
+          [ weight, (min - total).round(2) ].max.clamp(..0.0)
+        else
+          weight
+        end
       end
 
       def score_of(hits)

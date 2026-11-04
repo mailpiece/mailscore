@@ -3,6 +3,7 @@ module MailScore
     # A URL whose host is a bare IP address.
     class HttpToIp < Rule
       NAME = "LINK_TO_IP_ADDRESS"
+      GROUP = "html"
       WEIGHT = 1.0
       DESCRIPTION = "Link to an IP address"
 

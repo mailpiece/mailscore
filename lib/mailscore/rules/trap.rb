@@ -6,6 +6,7 @@ module MailScore
     # turned trap still gets the odd stray. The detail never names the trap.
     class Trap < Rule
       NAME = "SENT_TO_TRAP"
+      GROUP = "trap"
       WEIGHT = 10.0
       DESCRIPTION = "Sent to a trap address"
 

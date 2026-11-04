@@ -3,6 +3,7 @@ module MailScore
     # One link, through a URL shortener, and hardly any text.
     class RedirectorUrlOnly < Rule
       NAME = "SHORTENED_LINK_ONLY"
+      GROUP = "url"
       WEIGHT = 1.0
       DESCRIPTION = "The message is only a shortened link"
 

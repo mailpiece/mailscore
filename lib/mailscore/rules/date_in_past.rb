@@ -3,6 +3,7 @@ module MailScore
     # A Date further behind the clock than +date_past_margin+ seconds.
     class DateInPast < Rule
       NAME = "DATE_TOO_OLD"
+      GROUP = "headers"
       WEIGHT = 1.0
       DESCRIPTION = "Date header far in the past"
 

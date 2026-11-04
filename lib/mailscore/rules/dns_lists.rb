@@ -4,15 +4,19 @@ module MailScore
     # what its checks find in the message and the session, unless it skips
     # the sender.
     # Lists that +is_whitelist+ are asked first, and what they allow the
-    # others are not asked about. The +uribl+ lists' hits weigh at most
-    # URIBL_MAX_WEIGHT together.
+    # others are not asked about. Their symbols are in the rbl and surbl
+    # groups.
     class DnsLists < Rule
       NAME = "DNS_LISTS"
+      GROUPS = { "dnsbl" => "rbl", "uribl" => "surbl" }.freeze
       SYMBOLS = {}.freeze
-      URIBL_MAX_WEIGHT = 12.5
 
       def self.symbols(config)
-        [ *config.dnsbl, *config.uribl ].map(&:symbols).reduce({}, :merge)
+        GROUPS.each_with_object({}) do |(setting, group), symbols|
+          config.public_send(setting).each do |list|
+            list.symbols.each { |name, (weight, description)| symbols[name] = [ weight, description, group ] }
+          end
+        end
       end
 
       def run(message, envelope)
@@ -27,22 +31,8 @@ module MailScore
         allowed = fired.select { it.query.list.allows?(it) }.flat_map { it.query.origins }
         fired += DnsList.fire(others.flat_map { it.queries(candidates.for(it), allowed) }, resolver, envelope)
 
-        uribl, dnsbl = fired.partition { @config.uribl.include?(it.query.list) }
-        [ *DnsList.hits(dnsbl), *capped(DnsList.hits(uribl)) ]
+        DnsList.hits(fired)
       end
-
-      private
-        def capped(hits)
-          total = 0.0
-
-          hits.map do |hit|
-            next hit unless hit.weight.positive?
-
-            weight = [ hit.weight, URIBL_MAX_WEIGHT - total ].min
-            total += weight
-            hit.with(weight:)
-          end
-        end
     end
   end
 end

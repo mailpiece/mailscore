@@ -3,6 +3,7 @@ module MailScore
     # A risky file dressed as a document, such as invoice.pdf.exe.
     class MimeDoubleBadExtension < Rule
       NAME = "ATTACHMENT_DISGUISED_EXTENSION"
+      GROUP = "mime_types"
       WEIGHT = 3.0
       DESCRIPTION = "Attachment disguised behind a harmless extension"
 

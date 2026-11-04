@@ -4,6 +4,7 @@ module MailScore
     # phishing uses to collect credentials.
     class HtmlForm < Rule
       NAME = "HTML_FORM"
+      GROUP = "html"
       WEIGHT = 1.5
       DESCRIPTION = "HTML form in the message"
 

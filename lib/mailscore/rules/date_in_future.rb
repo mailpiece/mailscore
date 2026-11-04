@@ -5,6 +5,7 @@ module MailScore
     # A Date further ahead of the clock than +date_future_margin+ seconds.
     class DateInFuture < Rule
       NAME = "DATE_IN_FUTURE"
+      GROUP = "headers"
       WEIGHT = 4.0
       DESCRIPTION = "Date header in the future"
 

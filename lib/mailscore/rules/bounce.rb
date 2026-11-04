@@ -6,6 +6,7 @@ module MailScore
     # of them are needed.
     class Bounce < Rule
       NAME = "BOUNCE"
+      GROUP = "headers"
       WEIGHT = -0.1
       DESCRIPTION = "Delivery status or read receipt"
 

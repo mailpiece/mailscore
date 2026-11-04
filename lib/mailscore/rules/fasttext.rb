@@ -9,6 +9,7 @@ module MailScore
     # softmax is sure of itself even on little data.
     class Fasttext < Rule
       NAME = "FASTTEXT"
+      GROUP = "neural"
       SYMBOLS = {
         "FASTTEXT_SPAM" => [ 3.0, "Trained model says spam" ],
         "FASTTEXT_HAM" => [ -2.0, "Trained model says not spam" ]

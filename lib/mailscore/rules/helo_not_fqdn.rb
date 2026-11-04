@@ -4,6 +4,7 @@ module MailScore
     # client IP there is no session to judge it by.
     class HeloNotFqdn < Rule
       NAME = "HELO_NOT_FULL_DOMAIN"
+      GROUP = "hfilter"
       WEIGHT = 2.0
       DESCRIPTION = "Server greeted with an incomplete name"
 

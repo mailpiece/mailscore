@@ -5,6 +5,7 @@ module MailScore
     # worst field repeated.
     class MultipleUniqueHeaders < Rule
       NAME = "UNIQUE_HEADER_REPEATED"
+      GROUP = "headers"
       WEIGHT = 7.0
       DESCRIPTION = "Repeated header that must appear once"
 

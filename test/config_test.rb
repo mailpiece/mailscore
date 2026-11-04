@@ -275,6 +275,27 @@ class MailScore::ConfigTest < MailScore::TestCase
     assert_raises(MailScore::ConfigError) { parse(with_actions("reject" => 3)) }
   end
 
+  def test_only_url_dns_lists_are_capped_by_default
+    assert_equal({ "surbl" => MailScore::Config::Group.new(max_score: 12.5, min_score: nil) }, parse(SETTINGS).groups)
+  end
+
+  def test_a_group_left_out_or_a_score_a_group_leaves_out_keeps_its_default
+    config = parse(SETTINGS.merge("groups" => { "headers" => { "max_score" => 8 }, "surbl" => { "min_score" => -2 } }))
+
+    assert_equal({ "surbl" => MailScore::Config::Group.new(max_score: 12.5, min_score: -2.0), "headers" => MailScore::Config::Group.new(max_score: 8.0, min_score: nil) },
+      config.groups)
+  end
+
+  def test_groups_are_checked
+    assert_equal "unknown group: uribl", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("groups" => { "uribl" => { "max_score" => 12.5 } })) }.message
+    assert_equal "groups must be a mapping", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("groups" => [])) }.message
+
+    [ { "max_score" => -1 }, { "min_score" => 1 }, { "max_score" => "8" }, { "max" => 8 }, nil ].each do |scores|
+      error = assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("groups" => { "headers" => scores })) }
+      assert_equal "groups.headers must have a max_score of 0 or more, a min_score of 0 or less, or both", error.message
+    end
+  end
+
   def test_fuzzy_settings_have_defaults
     config = parse(SETTINGS)
 

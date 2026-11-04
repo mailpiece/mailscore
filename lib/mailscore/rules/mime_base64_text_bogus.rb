@@ -3,6 +3,7 @@ module MailScore
     # Plain ASCII text encoded in base64, which it never needs.
     class MimeBase64TextBogus < Rule
       NAME = "TEXT_IN_BASE64"
+      GROUP = "mime"
       WEIGHT = 1.0
       DESCRIPTION = "Plain text needlessly encoded in base64"
 

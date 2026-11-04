@@ -53,10 +53,11 @@ module MailScore
     end
   end
 
-  # One class per rule, a MailScore::Rule, with +NAME+, +WEIGHT+ and +DESCRIPTION+, and
-  # +run(message, envelope)+ taking a Message and an Envelope and returning nil
-  # or a Hit. A rule with several symbols lists them in +SYMBOLS+, name to
-  # weight and description, keeps +NAME+ for logs, and may return a list.
+  # One class per rule, a MailScore::Rule, with +NAME+, +GROUP+, +WEIGHT+ and
+  # +DESCRIPTION+, and +run(message, envelope)+ taking a Message and an
+  # Envelope and returning nil or a Hit. A rule with several symbols lists
+  # them in +SYMBOLS+, name to weight and description, keeps +NAME+ for logs,
+  # and may return a list. +GROUP+ is the group its symbols are capped in.
   # +ALL+ is the catalogue `/symbols` lists and `/check` runs.
   module Rules
     CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive ].freeze
@@ -74,17 +75,27 @@ module MailScore
     ].freeze
 
     # With a +config+, a rule whose symbols are settings lists them from its
-    # +symbols(config)+.
+    # +symbols(config)+, each with its own group or the rule's.
     def self.catalogue(rules = ALL, config: nil)
       rules.flat_map do |rule|
-        if config && rule.respond_to?(:symbols)
-          rule.symbols(config).map { |name, (weight, description)| { name:, weight:, description: } }
-        elsif rule.const_defined?(:SYMBOLS)
-          rule::SYMBOLS.map { |name, (weight, description)| { name:, weight:, description: } }
-        else
-          [ { name: rule::NAME, weight: rule::WEIGHT, description: rule::DESCRIPTION } ]
-        end
+        symbols =
+          if config && rule.respond_to?(:symbols) then rule.symbols(config)
+          elsif rule.const_defined?(:SYMBOLS) then rule::SYMBOLS
+          else { rule::NAME => [ rule::WEIGHT, rule::DESCRIPTION ] }
+          end
+
+        symbols.map { |name, (weight, description, group)| { name:, weight:, description:, group: group || rule::GROUP } }
       end
+    end
+
+    # +rules+ and what a scan fires around them.
+    def self.scanned(rules = ALL)
+      [ *rules, Limits, Reputation, Greylister, Scanner ]
+    end
+
+    # Every group the +groups+ setting may cap.
+    def self.groups
+      scanned.flat_map { it.const_defined?(:GROUPS) ? it::GROUPS.values : it::GROUP }.uniq
     end
   end
 end

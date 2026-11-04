@@ -3,6 +3,7 @@ module MailScore
     # A URL with a zero-width character in it, to slip past filters.
     class ZeroWidthSpaceUrl < Rule
       NAME = "LINK_ZERO_WIDTH_CHARACTER"
+      GROUP = "url"
       WEIGHT = 7.0
       DESCRIPTION = "Hidden character in a link"
 

@@ -8,6 +8,7 @@ module MailScore
     # +symbols+ lists those, a default symbol with its own description.
     class FuzzyMatch < Rule
       NAME = "FUZZY"
+      GROUP = "fuzzy"
 
       SYMBOLS = {
         "FUZZY_SPAM" => [ 12.0, "Matches known spam" ],

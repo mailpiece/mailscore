@@ -64,7 +64,7 @@ Response, one verdict for the message:
 }
 ```
 
-- `score` is the sum of the fired symbols' weights.
+- `score` is the sum of the fired symbols' weights, each within its group's cap; see [Groups](#groups).
 - Every score, weight and threshold is a float, such as `0.0` or `12.0`, here and in `/symbols`, however the config writes it.
 - `symbols` lists every symbol that fired. `name` is a symbol from `/symbols`, `weight` what it added to the score, `detail`, when present, what it fired on, and `description` the one `/symbols` gives it.
 - `complete` is false when the scan ran past its budget. See [Timeout](#timeout).
@@ -165,6 +165,18 @@ mailscore reads a message only so far. Past a cap the rest is skipped, and the c
 
 A cap no ordinary mail reaches weighs a little; one a long newsletter may reach weighs nothing.
 
+## Groups
+
+Every symbol belongs to one group, such as `headers`, `hfilter`, `policies`, `rbl` for `dnsbl` lists and `surbl` for `uribl` lists. `/symbols` gives each symbol's group. The `groups` setting caps what a group adds with `max_score` and `min_score`:
+
+```yaml
+groups:
+  surbl: { max_score: 12.5 }   # the default
+  headers: { max_score: 8 }
+```
+
+Symbols count in the order they fire. One that takes its group's total past `max_score` adds only what is left, and every later one of the same sign adds 0; a negative total stops at `min_score` the same way. A capped symbol still fires, with the weight it added, and the score, the action, reputation and autolearn all read that weight. `max_score` is 0 or more and `min_score` 0 or less; 0 is no cap. By default only `surbl` is capped, at 12.5, so link lists together weigh at most that.
+
 ## Rules
 
 Some symbols the caller relies on:
@@ -256,7 +268,7 @@ The flags are a setting, and these three are the default.
 - `ping`: no token. `200` and `pong` as plain text, for container health checks.
 - `health`: read token. `200` and `{"status": "ok", "version": "0.1.1"}` when the database opens. `503` otherwise.
 - `stats`: read token. Counters since start, such as scans per action, budget overruns, rule errors, scan errors, learns, autolearns and fuzzy matches. Never message content or addresses. Under `fasttext`, the model in place: its accuracy on held-out samples and the spam and ham samples it learned from, and the time of the last training, swapped in or not, as `{"trained_at": "2026-11-03T03:00:00Z", "accuracy": 0.97, "spam_samples": 4000, "ham_samples": 4000}`, with nulls before any.
-- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name" } ]`. A description is a short label, such as "No reverse DNS for the sending server".
+- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name", "group": "hfilter" } ]`. A description is a short label, such as "No reverse DNS for the sending server".
 
 ## Errors
 

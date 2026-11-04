@@ -7,6 +7,7 @@ module MailScore
     # as a percentage.
     class Bayes < Rule
       NAME = "BAYES"
+      GROUP = "statistics"
       SYMBOLS = {
         "BAYES_SPAM" => [ 5.1, "Learned filter says spam" ],
         "BAYES_HAM" => [ -3.0, "Learned filter says not spam" ]
