@@ -4,8 +4,28 @@ class MailScore::DnsListTest < MailScore::TestCase
   ZEN = { "zone" => "Zen.Example.", "symbol" => "ZEN", "weight" => 0,
     "returncodes" => { "ZEN_SBL" => { "weight" => 4.0, "codes" => [ "127.0.0.2" ] }, "ZEN_XBL" => { "weight" => 4.0, "codes" => "127.0.0.4" } } }.freeze
 
-  def test_lists_are_off_by_default
-    assert_empty parse(SETTINGS).dnsbl
+  def test_no_list_is_asked_by_default
+    config = parse(SETTINGS)
+
+    assert_empty config.dnsbl
+    assert_empty config.uribl
+  end
+
+  def test_rspamd_asks_the_lists_rspamd_asks_by_default
+    config = parse(SETTINGS.merge("dnsbl" => "rspamd", "uribl" => "rspamd"))
+
+    assert_equal %w[ zen.spamhaus.org rep.mailspike.net list.dnswl.org dwl.dnswl.org bl.spameatingmonkey.net bl.ipv6.spameatingmonkey.net
+      bip.virusfree.cz bl.blocklist.de ], config.dnsbl.map(&:zone)
+    assert_equal %w[ ebl.msbl.org email.rspamd.com multi.surbl.org multi.uribl.com uribl.rspamd.com dbl.spamhaus.org
+      uribl.spameatingmonkey.net fresh15.spameatingmonkey.net ], config.uribl.map(&:zone)
+    assert_equal({ "CLIENT" => 4.0, "RECEIVED" => 3.0 }, config.dnsbl.first.returns.first.weight)
+  end
+
+  def test_a_list_of_your_own_is_asked_alone
+    config = parse(SETTINGS.merge("dnsbl" => [ ZEN ], "uribl" => "rspamd"))
+
+    assert_equal [ "zen.example" ], config.dnsbl.map(&:zone)
+    assert_equal 8, config.uribl.size
   end
 
   def test_a_list_parses
@@ -28,7 +48,9 @@ class MailScore::DnsListTest < MailScore::TestCase
       ZEN.merge("whitelist_exception" => "ZEN_SBL"), ZEN.merge("is_whitelist" => "yes") ].each do |list|
       assert_raises(MailScore::ConfigError, list.inspect) { parse(SETTINGS.merge("dnsbl" => [ list ])) }
     end
-    assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("dnsbl" => ZEN)) }
+    [ ZEN, "Rspamd", "spamhaus" ].each do |lists|
+      assert_raises(MailScore::ConfigError, lists.inspect) { parse(SETTINGS.merge("dnsbl" => lists)) }
+    end
   end
 
   def test_an_answer_fires_returns_by_code_or_by_bit

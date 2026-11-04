@@ -15,7 +15,7 @@ Use it anywhere you need to judge mail you receive yourself: scoring for a self-
 - reputation for the client IP, its DKIM signers and its SPF record
 - Bayes, fastText and fuzzy hashes, learned from your own mail
 - traps and autolearn, off by default
-- no third-party data by default: DNS lists only when configured
+- no third-party data by default: DNS lists only when configured, Rspamd's set ready to switch on
 
 Plus:
 

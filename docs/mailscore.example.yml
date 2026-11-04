@@ -47,13 +47,13 @@
 # trap_fuzzy_flag: off              # a fuzzy flag to add trapped mail under
 # trap_learn_spam: off              # learn trapped mail as spam
 # trap_allow_multiple_rcpts: off    # let a trap act beside other recipients
-# dnsbl:                            # none by default; DNS lists for the client IP, see dns-lists.md
+# dnsbl:                            # none by default, rspamd for Rspamd's; DNS lists for the client IP, see dns-lists.md
 #   - zone: zen.spamhaus.org
 #     symbol: SPAMHAUS
 #     weight: 0
 #     returncodes:
 #       SPAMHAUS_SPAM_SOURCE: { weight: 4.0, codes: [ 127.0.0.2 ] }
-# uribl:                            # none by default; DNS lists for URL and other domains, see dns-lists.md
+# uribl:                            # none by default, rspamd for Rspamd's; DNS lists for URL and other domains, see dns-lists.md
 #   - zone: dbl.spamhaus.org
 #     symbol: SPAMHAUS_DOMAIN
 #     weight: 0
