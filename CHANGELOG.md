@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group
+- `scores` sets any symbol's weight, or switches it off
 - `dnsbl: recommended` and `uribl: recommended` ask a bundled set of DNS lists
 - Each DNS list is probed for a name it should not list and skipped while it lists it
 
