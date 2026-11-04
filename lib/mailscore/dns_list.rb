@@ -8,8 +8,9 @@ module MailScore
   # their codes or by a bit they carry. An answer no return names fires the
   # list's own symbol when +unknown+ is set. +checks+ say what the list is
   # asked about, at most +requests_limit+ URLs and as many addresses from
-  # the text. +ipv4+ and +ipv6+ say which client addresses it takes, +no_ip+
-  # keeps URL hosts that are addresses from it, and +url_full_hostname+,
+  # the text, and the top +received_max_pos+ Received headers. +ipv4+ and
+  # +ipv6+ say which client addresses it takes, +no_ip+ keeps URL hosts
+  # that are addresses from it, and +url_full_hostname+,
   # +emails_domainonly+ and +dkim_domainonly+ how a name is asked. A list
   # with a +digest+ is asked a name's digest in +hash_format+, cut to
   # +hash_len+. +prefixes+ name each check's symbols, such as CLIENT_ for
@@ -19,7 +20,7 @@ module MailScore
   # about the same way, unless they +ignore_whitelist+. A list that says
   # +exclude_users+ skips authenticated senders, and +exclude_local+ the
   # local networks.
-  DnsList = Data.define(:zone, :symbol, :weight, :returns, :unknown, :checks, :prefixes, :requests_limit, :ipv4, :ipv6, :no_ip,
+  DnsList = Data.define(:zone, :symbol, :weight, :returns, :unknown, :checks, :prefixes, :requests_limit, :received_max_pos, :ipv4, :ipv6, :no_ip,
     :url_full_hostname, :emails_domainonly, :emails_delimiter, :dkim_domainonly, :digest, :hash_len, :hash_format,
     :is_whitelist, :whitelist_exception, :ignore_whitelist, :exclude_users, :exclude_local)
 

@@ -3,11 +3,9 @@ module MailScore
   # sender to a trap, when the trap is its only recipient or
   # +trap_allow_multiple_rcpts+ is on, fires SENT_TO_TRAP through Rules::Trap. After
   # the verdict it adds its fuzzy hashes under +trap_fuzzy_flag+,
-  # FUZZY_WEIGHT to the count, and is learned as spam with +trap_learn_spam+,
+  # +trap_fuzzy_weight+ to the count, and is learned as spam with +trap_learn_spam+,
   # each when switched on. Mail to a trap and others is left alone.
   class Trap
-    FUZZY_WEIGHT = 10
-
     def initialize(config, database)
       @config = config
       @database = database
@@ -24,7 +22,7 @@ module MailScore
 
       Stats.new(@database).increment("trap_hits")
 
-      Fuzzy.new(@config, @database).add(message, @config.trap_fuzzy_flag, count: FUZZY_WEIGHT) if @config.trap_fuzzy_flag
+      Fuzzy.new(@config, @database).add(message, @config.trap_fuzzy_flag, count: @config.trap_fuzzy_weight) if @config.trap_fuzzy_flag
       Bayes.new(@config, @database).learn(message, "spam") if @config.trap_learn_spam
     end
   end

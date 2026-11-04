@@ -19,7 +19,7 @@ class MailScore::DnsListTest < MailScore::TestCase
 
   def test_a_malformed_list_fails
     [ ZEN.except("symbol"), ZEN.merge("symbol" => "zen"), ZEN.merge("weight" => "high"), ZEN.merge("zone" => ""), ZEN.merge("ipv6" => "no"),
-      ZEN.merge("checks" => [ "bogus" ]), ZEN.merge("checks" => []), ZEN.merge("requests_limit" => 0), ZEN.merge("returncodes" => { "ZEN_SBL" => { "weight" => 4 } }),
+      ZEN.merge("checks" => [ "bogus" ]), ZEN.merge("checks" => []), ZEN.merge("requests_limit" => 0), ZEN.merge("received_max_pos" => 0), ZEN.merge("returncodes" => { "ZEN_SBL" => { "weight" => 4 } }),
       ZEN.merge("returncodes" => { "ZEN_SBL" => { "weight" => 4, "codes" => [ "spam" ] } }),
       ZEN.merge("returnbits" => { "ZEN_SBL" => { "weight" => 4, "bit" => 0 } }),
       ZEN.merge("returncodes" => { "ZEN_LOOKUP_FAILED" => { "weight" => 4, "codes" => [ "127.0.0.2" ] } }),

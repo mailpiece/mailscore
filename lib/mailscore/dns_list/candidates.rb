@@ -10,7 +10,6 @@ module MailScore
     class Candidates
       MESSAGE_ID_DOMAIN = /@([^.]+\.[^>]+)/
       CHECKS = { "emails" => :email, "urls" => :url, "content_urls" => :url }.freeze
-      RECEIVED_HOPS = 5
 
       def initialize(message, envelope, resolver)
         @message = message
@@ -32,13 +31,13 @@ module MailScore
           address && list.takes?(address) ? [ [ address.to_s, "from", DnsList.reversed(address), true ] ] : []
         end
 
-        # The addresses the top RECEIVED_HOPS Received headers name, the
-        # hops nearest this server, at most +requests_limit+, reversed
+        # The addresses the top +received_max_pos+ Received headers name,
+        # the hops nearest this server, at most +requests_limit+, reversed
         # likewise: not one in the local networks for a list that says
         # +exclude_local+, nor the client's own when the list asks about it
         # by +from+ too. The sender writes every header further down.
         def received(list)
-          @message.header_values("received").first([ RECEIVED_HOPS, list.requests_limit ].min).filter_map { Received.address(it) }.uniq.filter_map do |address|
+          @message.header_values("received").first([ list.received_max_pos, list.requests_limit ].min).filter_map { Received.address(it) }.uniq.filter_map do |address|
             next if !list.takes?(address) || (list.exclude_local && @envelope.local_networks.any? { it.include?(address) })
             next if address == @envelope.address && list.checks.include?("from")
 

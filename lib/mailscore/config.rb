@@ -27,8 +27,8 @@ module MailScore
     :date_future_margin, :date_past_margin, :greylist_timeout, :greylist_expiry, :local_networks,
     :reputation_window, :reputation_min_count, :reputation_expiry, :spf_reputation_exclusions, :asn_database, :country_database,
     :fuzzy_flags, :fuzzy_expiry, :fuzzy_min_words, :fuzzy_threshold, :fuzzy_min_attachment_size,
-    :bayes_min_learns, :bayes_max_tokens, :language_model, :autolearn, :autolearn_spam_score, :autolearn_ham_score,
-    :trap_addresses, :trap_fuzzy_flag, :trap_learn_spam, :trap_allow_multiple_rcpts, :dnsbl, :uribl,
+    :bayes_min_learns, :bayes_max_tokens, :bayes_min_tokens, :bayes_min_prob_strength, :language_model, :autolearn, :autolearn_spam_score, :autolearn_ham_score,
+    :trap_addresses, :trap_fuzzy_flag, :trap_fuzzy_weight, :trap_learn_spam, :trap_allow_multiple_rcpts, :dnsbl, :uribl,
     :nameservers, :nameservers_refresh, :fasttext, :fasttext_model, :fasttext_min_samples, :fasttext_max_samples, :fasttext_sample_expiry, :fasttext_train_every,
     :log_level, :read_token, :write_token)
 
@@ -66,6 +66,8 @@ module MailScore
       "local_networks" => %w[ 127.0.0.0/8 ::1/128 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 fc00::/7 169.254.0.0/16 fe80::/10 ].freeze,
       "bayes_min_learns" => 200,
       "bayes_max_tokens" => 1_000_000,
+      "bayes_min_tokens" => 11,
+      "bayes_min_prob_strength" => 0.05,
       "language_model" => nil,
       "autolearn" => false,
       "autolearn_spam_score" => nil,
@@ -85,6 +87,7 @@ module MailScore
       "fuzzy_min_attachment_size" => 1024,
       "trap_addresses" => [].freeze,
       "trap_fuzzy_flag" => false,
+      "trap_fuzzy_weight" => 10,
       "trap_learn_spam" => false,
       "trap_allow_multiple_rcpts" => false,
       "dnsbl" => [].freeze,
@@ -178,12 +181,15 @@ module MailScore
           fuzzy_min_attachment_size: setting(settings["fuzzy_min_attachment_size"], "fuzzy_min_attachment_size", Integer),
           bayes_min_learns: setting(settings["bayes_min_learns"], "bayes_min_learns", Integer),
           bayes_max_tokens: setting(settings["bayes_max_tokens"], "bayes_max_tokens", Integer),
+          bayes_min_tokens: setting_or_zero(settings["bayes_min_tokens"], "bayes_min_tokens", Integer),
+          bayes_min_prob_strength: setting_or_zero(settings["bayes_min_prob_strength"], "bayes_min_prob_strength", Numeric),
           language_model: settings["language_model"]&.then { setting(it, "language_model", String) },
           autolearn:,
           autolearn_spam_score: spam_score,
           autolearn_ham_score: ham_score,
           trap_addresses: addresses(settings["trap_addresses"], "trap_addresses"),
           trap_fuzzy_flag: flag_or_off(settings["trap_fuzzy_flag"], fuzzy_flags, "trap_fuzzy_flag"),
+          trap_fuzzy_weight: setting(settings["trap_fuzzy_weight"], "trap_fuzzy_weight", Integer),
           trap_learn_spam: switch(settings["trap_learn_spam"], "trap_learn_spam"),
           trap_allow_multiple_rcpts: switch(settings["trap_allow_multiple_rcpts"], "trap_allow_multiple_rcpts"),
           dnsbl: DnsList::Parser.parse(settings["dnsbl"], "dnsbl", checks: %w[ from ]),
@@ -215,6 +221,12 @@ module MailScore
         def setting(value, key, type)
           valid = value.is_a?(type) && (type == String ? !value.empty? : value.positive?)
           raise ConfigError, "#{key} must be a #{EXPECTED.fetch(type)}" unless valid
+          value
+        end
+
+        # 0 turns the check off.
+        def setting_or_zero(value, key, type)
+          raise ConfigError, "#{key} must be 0 or a #{EXPECTED.fetch(type)}" unless value.is_a?(type) && !value.negative?
           value
         end
 

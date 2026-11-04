@@ -9,9 +9,9 @@ module MailScore
   # differs only where the tokens do not look, is still the same message.
   #
   # A token's spam probability is Robinson's, pulled toward PRIOR by STRENGTH,
-  # and a token leaning less than MIN_STRENGTH either way says nothing and is
-  # dropped; one at exactly even is kept. The rest combine with Fisher's
-  # inverse chi-square. It answers only once each class has
+  # and a token leaning less than +bayes_min_prob_strength+ either way says
+  # nothing and is dropped; one at exactly even is kept. The rest combine
+  # with Fisher's inverse chi-square. It answers only once each class has
   # +bayes_min_learns+ messages.
   #
   # Past +bayes_max_tokens+, +prune+ drops the tokens seen least, which
@@ -24,8 +24,6 @@ module MailScore
     STRENGTH = 1.0
     PRIOR = 0.5
     MIN_TOKEN_HITS = 2
-    MIN_TOKENS = 11
-    MIN_STRENGTH = 0.05
     CHUNK = 500
 
     def initialize(config, database)
@@ -36,11 +34,11 @@ module MailScore
 
     # Learns +message+ as +klass+, or moves it there from the other class.
     # False when it was already learned as +klass+, and nil, learning
-    # nothing, when it has fewer than MIN_TOKENS tokens.
+    # nothing, when it has fewer than +bayes_min_tokens+ tokens.
     def learn(message, klass)
       other = (CLASSES - [ klass ]).first
       tokens = Tokens.of(message, @detector)
-      return if tokens.size < MIN_TOKENS
+      return if tokens.size < @config.bayes_min_tokens
       digest = Digest::SHA256.hexdigest(tokens.pack("q>*"))
 
       @database.transaction do
@@ -74,7 +72,7 @@ module MailScore
     # message too short to learn.
     def probability(message)
       tokens = Tokens.of(message, @detector)
-      return if tokens.size < MIN_TOKENS
+      return if tokens.size < @config.bayes_min_tokens
 
       totals = @database.execute("SELECT class, learns FROM bayes_totals").to_h
       spam_learns, ham_learns = totals.values_at(*CLASSES).map(&:to_i)
@@ -115,7 +113,8 @@ module MailScore
       end
 
       def weak?(probability)
-        probability.between?(PRIOR - MIN_STRENGTH, PRIOR + MIN_STRENGTH) && ![ PRIOR - MIN_STRENGTH, PRIOR, PRIOR + MIN_STRENGTH ].include?(probability)
+        strength = @config.bayes_min_prob_strength
+        probability.between?(PRIOR - strength, PRIOR + strength) && ![ PRIOR - strength, PRIOR, PRIOR + strength ].include?(probability)
       end
 
       # 1 when every token leans spam, 0 when every token leans ham.
