@@ -14,7 +14,8 @@ module MailScore
 
   # Settings from a YAML file, each with a default, and tokens from ENV.
   # Weights and scores are floats, however written. +thresholds+ lists the
-  # actions lowest first, with nil for one switched off. +local_networks+ is
+  # actions lowest first, with nil for one switched off. +scores+ maps a
+  # symbol to its weight, or nil for one switched off. +local_networks+ is
   # a list of IPAddr. +groups+ maps a symbol group to its Group, of floats
   # or nil. +fuzzy_flags+ maps a flag name to a FuzzyFlag.
   # +trap_addresses+ and +spf_reputation_exclusions+ are lowercase, and
@@ -23,7 +24,7 @@ module MailScore
   # names, or is nil for the system resolver. +language_model+ is a path, or
   # nil for none. +shorteners+, +trusted_redirectors+, +risky_extensions+ and
   # +archive_extensions+ are sets read from a file, the bundled one by default.
-  Config = Data.define(:database, :bind, :port, :workers, :message_size_cap, :scan_budget, :thresholds, :groups,
+  Config = Data.define(:database, :bind, :port, :workers, :message_size_cap, :scan_budget, :thresholds, :scores, :groups,
     :regexp_timeout, :database_busy_timeout, :expire_every, :subject_template, :soft_reject_on_timeout,
     :date_future_margin, :date_past_margin, :greylist_timeout, :greylist_expiry, :local_networks,
     :reputation_window, :reputation_min_count, :reputation_expiry, :spf_reputation_exclusions, :asn_database, :country_database,
@@ -57,6 +58,7 @@ module MailScore
       "greylist_timeout" => 300,
       "greylist_expiry" => 86_400,
       "actions" => ACTIONS,
+      "scores" => {}.freeze,
       "groups" => GROUPS,
       "regexp_timeout" => 0.5,
       "database_busy_timeout" => 5,
@@ -160,6 +162,7 @@ module MailScore
           message_size_cap: setting(settings["message_size_cap"], "message_size_cap", Integer),
           scan_budget: setting(settings["scan_budget"], "scan_budget", Numeric),
           thresholds: thresholds(settings["actions"]),
+          scores: scores(settings["scores"]),
           groups: groups(settings["groups"]),
           regexp_timeout: setting(settings["regexp_timeout"], "regexp_timeout", Numeric),
           database_busy_timeout: setting(settings["database_busy_timeout"], "database_busy_timeout", Numeric),
@@ -341,11 +344,21 @@ module MailScore
           thresholds
         end
 
+        # The scanner checks each name against the symbols it knows.
+        def scores(scores)
+          raise ConfigError, "scores must be a mapping" unless scores.is_a?(Hash)
+
+          scores.to_h do |name, value|
+            raise ConfigError, "scores.#{name} must be a number or off" unless value == false || value.is_a?(Numeric)
+            [ name, (value.to_f if value) ]
+          end
+        end
+
         # A group left out keeps its default, as does a score a group leaves
         # out. max_score is 0 or more and min_score 0 or less.
+        # The scanner checks each name against the groups there are.
         def groups(groups)
           raise ConfigError, "groups must be a mapping" unless groups.is_a?(Hash)
-          check_keys(groups, Rules.groups, "group")
 
           merged = GROUPS.merge(groups) { |_, default, own| own.is_a?(Hash) ? default.merge(own) : own }
           merged.to_h { |name, scores| [ name, group(name, scores) ] }

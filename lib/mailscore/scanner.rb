@@ -31,8 +31,10 @@ module MailScore
   # +ERROR+ symbol when it has one. The caps the
   # message reached fire after the rules, and reputation scores after them;
   # App records it after the verdict. A scan that raises gets the +failed+
-  # verdict instead: incomplete, with SCAN_ERROR. Before the action, each
-  # symbol group's max_score and min_score bound what its hits add.
+  # verdict instead: incomplete, with SCAN_ERROR. The +scores+ setting
+  # weighs every hit but the greylister's, which holds a decision, not a
+  # weight. Before the action, each symbol group's max_score and min_score
+  # bound what its weighed hits add.
   #
   # Both weigh 3.0, about what one of the late rules, a DNS list, Bayes or
   # fastText, adds for spam, so a message cannot score low by slowing the
@@ -57,14 +59,17 @@ module MailScore
       @greylister = greylister
       @reputation = reputation
       @database = database
-      @catalogue = Rules.catalogue(Rules.scanned(rules), config:)
-      @groups = @catalogue.to_h { [ it[:name], it[:group] ] }
+      catalogue = Rules.catalogue(Rules.scanned(rules), config:)
+      @groups = catalogue.to_h { [ it[:name], it[:group] ] }
+      @weights = catalogue.to_h { [ it[:name], it[:weight] ] }.except(Greylister::NAME)
+      check_names
+      @catalogue = catalogue.map { in_use(it) }
     end
 
     def check(message, envelope)
       hits, complete = run(message, envelope)
-      hits.concat(Limits.hits(message))
-      hits.concat(@reputation.hits(message, envelope, hits)) if @reputation
+      hits = scored(hits.concat(Limits.hits(message)))
+      hits.concat(scored(@reputation.hits(message, envelope, hits))) if @reputation
       hits = capped(hits)
       action = action_for(hits, complete)
 
@@ -78,12 +83,33 @@ module MailScore
     end
 
     def failed(message)
-      hits = capped([ hit("SCAN_ERROR") ])
+      hits = capped(scored([ hit("SCAN_ERROR") ]))
       action = action_for(hits, false)
       verdict(action.nil? || action == "greylist" ? "no_action" : action, hits, false, message)
     end
 
     private
+      def check_names
+        check_known(@config.scores.keys, @weights.keys, "symbol in scores")
+        check_known(@config.groups.keys, Rules.groups, "group")
+      end
+
+      def check_known(names, known, kind)
+        if (unknown = names - known).any?
+          raise ConfigError, "unknown #{kind}: #{unknown.join(", ")}"
+        end
+      end
+
+      # A symbol at the weight in use, or marked disabled when switched off.
+      def in_use(symbol)
+        if @config.scores.key?(symbol[:name])
+          score = @config.scores[symbol[:name]]
+          score ? symbol.merge(weight: score) : symbol.merge(disabled: true)
+        else
+          symbol
+        end
+      end
+
       def run(message, envelope)
         envelope = envelope.with(deadline: Envelope.now + @config.scan_budget, lookups: {})
         hits = []
@@ -111,6 +137,17 @@ module MailScore
       def action_for(hits, complete)
         action = @config.action_for(score_of(hits))
         !complete && @config.soft_reject_on_timeout && action != "reject" ? "soft_reject" : action
+      end
+
+      # Each hit at its symbol's weight from the scores setting, scaled as the
+      # rule scaled the default, and none for a symbol switched off.
+      def scored(hits)
+        hits.filter_map do |hit|
+          next hit unless @config.scores.key?(hit.name)
+
+          score, default = @config.scores[hit.name], @weights.fetch(hit.name)
+          hit.with(weight: default.zero? ? score : (hit.weight * score / default).round(2)) if score
+        end
       end
 
       def hit(name, detail = nil)
