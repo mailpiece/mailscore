@@ -42,6 +42,26 @@ class MailScore::Content::UrlTest < MailScore::TestCase
     assert_equal "localhost", Url.domain("localhost")
   end
 
+  def test_within_matches_a_domain_or_below_it
+    shorteners = Set["bit.ly", "t.co"]
+
+    assert Url.parse("https://bit.ly/x").within?(shorteners)
+    assert Url.parse("https://a.go.bit.ly/x").within?(shorteners)
+    assert Url.parse("https://t.co/x").within?([ "t.co" ])
+    refute Url.parse("https://notbit.ly/x").within?(shorteners)
+    refute Url.parse("https://bit.ly.example/x").within?(shorteners)
+    refute Url.parse("https://ly/x").within?(shorteners)
+  end
+
+  def test_within_ignores_a_host_longer_than_any_domain_name
+    longest = "#{"a." * 122}xy.bit.ly"
+
+    assert_equal 253, longest.bytesize
+    assert Url.parse("https://#{longest}/x").within?(Set["bit.ly"])
+    refute Url.parse("https://a.#{longest}/x").within?(Set["bit.ly"])
+    refute Url.parse("https://#{"a." * 40_000}bit.ly/x").within?(Set["bit.ly"])
+  end
+
   def test_homographs
     assert Url.homograph?("pаypal.com")
     assert Url.homograph?("www.pοypal.example")

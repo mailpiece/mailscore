@@ -6,12 +6,15 @@ class MailScore::ConfigTest < MailScore::TestCase
   # Shown in the example with a value of their own: worked out at start, or
   # empty or none by default.
   SHOWN_AS_EXAMPLES = %w[ workers local_networks language_model autolearn_spam_score autolearn_ham_score
-    trap_addresses dnsbl uribl nameservers scores ].freeze
+    trap_addresses dnsbl uribl nameservers scores shorteners trusted_redirectors risky_extensions
+    archive_extensions ].freeze
+  # Shown with a file of the operator's own, which is not here.
+  LISTS = %w[ shorteners trusted_redirectors risky_extensions archive_extensions ].freeze
 
   def test_the_example_config_parses_and_lists_every_setting
-    assert_equal parse({}), MailScore::Config.load(EXAMPLE, env: TOKENS)
+    assert_equal without_lists(parse({})), without_lists(MailScore::Config.load(EXAMPLE, env: TOKENS))
 
-    MailScore::Config.parse(example_settings, env: TOKENS)
+    MailScore::Config.parse(example_settings.except(*LISTS), env: TOKENS)
     assert_equal MailScore::Config::KEYS.sort, example_settings.keys.sort
   end
 
@@ -34,8 +37,8 @@ class MailScore::ConfigTest < MailScore::TestCase
   def test_an_empty_file_or_no_file_takes_every_default
     path = File.join(Dir.mktmpdir, "mailscore.yml").tap { File.write(it, "") }
 
-    assert_equal parse({}), MailScore::Config.load(path, env: TOKENS)
-    assert_equal parse({}), MailScore::Config.load(nil, env: TOKENS)
+    assert_equal without_lists(parse({})), without_lists(MailScore::Config.load(path, env: TOKENS))
+    assert_equal without_lists(parse({})), without_lists(MailScore::Config.load(nil, env: TOKENS))
   end
 
   def test_a_partial_actions_mapping_keeps_the_other_defaults
@@ -113,6 +116,28 @@ class MailScore::ConfigTest < MailScore::TestCase
     assert_equal [ path, nil ], parse(SETTINGS.merge("asn_database" => path, "country_database" => false)).then { [ it.asn_database, it.country_database ] }
     [ "/nonexistent/GeoLite2-Country.mmdb", dir, empty, 3 ].each do |value|
       assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("country_database" => value)) }
+    end
+  end
+
+  def test_the_lists_are_bundled_and_a_file_replaces_one
+    path = File.join(Dir.mktmpdir, "shorteners.txt").tap { File.write(it, "# Ours\n\nShort.Example # a comment\n  go.example\n") }
+
+    assert_includes parse(SETTINGS).shorteners, "bit.ly"
+    assert_includes parse(SETTINGS).trusted_redirectors, "urldefense.com"
+    assert_includes parse(SETTINGS).risky_extensions, "exe"
+    assert_includes parse(SETTINGS).archive_extensions, "zip"
+
+    shorteners = parse(SETTINGS.merge("shorteners" => path)).shorteners
+    assert_includes shorteners, "short.example"
+    assert_includes shorteners, "go.example"
+    refute_includes shorteners, "bit.ly"
+  end
+
+  def test_a_list_must_be_a_readable_file
+    undecodable = File.join(Dir.mktmpdir, "shorteners.txt").tap { File.binwrite(it, "bit.ly\n\xff\n") }
+
+    [ "/nonexistent/shorteners.txt", Dir.mktmpdir, undecodable, 3 ].each do |value|
+      assert_equal "shorteners must be a readable file", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("shorteners" => value)) }.message
     end
   end
 
@@ -423,6 +448,11 @@ class MailScore::ConfigTest < MailScore::TestCase
 
     def parse(settings, env: TOKENS)
       MailScore::Config.parse(settings, env: env)
+    end
+
+    # Each List read is its own, so configs compare past them.
+    def without_lists(config)
+      config.to_h.except(*LISTS.map(&:to_sym))
     end
 
     def with_actions(actions)

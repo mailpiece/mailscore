@@ -12,6 +12,7 @@ module MailScore
       IP = /\A(?:(?:0x\h{1,8}|\d{1,10})(?:\.(?:0x\h{1,8}|\d{1,10})){0,3}|\[[\h:.]+\])\z/i
       SECOND_LEVELS = %w[ co com net org gov edu ac ne or go ].freeze
       CAP = 1000
+      LONGEST_NAME = 253
 
       def self.parse(string)
         string = string.strip.reverse.sub(TRAILING, "").reverse
@@ -46,9 +47,13 @@ module MailScore
         Url.homograph?(host)
       end
 
-      # Whether the host is one of +domains+ or below one.
+      # Whether the host is one of +domains+ or below one, looked up a suffix at a time.
+      # A host longer than any name in the DNS (RFC 1035) is within none.
       def within?(domains)
-        domains.any? { host == it || host.end_with?(".#{it}") }
+        return false if host.bytesize > LONGEST_NAME
+
+        labels = host.split(".", -1)
+        labels.each_index.any? { domains.include?(labels.drop(it).join(".")) }
       end
     end
   end
