@@ -6,6 +6,7 @@ require "mailscore/error"
 require "mailscore/dns_list"
 require "mailscore/dns_list/parser"
 require "mailscore/dns_list/candidates"
+require "mailscore/dns_list/monitor"
 
 module MailScore
   # A setting mailscore cannot run on, raised at boot so a bad config stops

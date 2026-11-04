@@ -46,6 +46,9 @@ dnsbl:
     ignore_whitelist: false         # optional, false; ask even what an allow-list allowed
     exclude_users: true             # optional, true; skip authenticated senders
     exclude_local: true             # optional, true; skip the local networks, and local Received addresses
+    monitored_address: 1.0.0.127    # optional, 1.0.0.127; the name the probe asks, see below
+    random_monitored: false         # optional, off for a zone checking from or received without no_ip, on for others; probe a random name
+    disable_monitoring: false       # optional, false; never probe the zone, and always ask it
 ```
 
 ## Checks
@@ -83,6 +86,16 @@ dnsbl:
 - The lists are asked in parallel, 16 at a time, within the scan budget.
 - `/symbols` names each zone, with a label of 20 or more letters and digits, such as a Data Query Service key, shown as `<key>`.
 
+## Probes
+
+mailscore probes every zone it asks, so a list that is retired and answers every query, or one that refuses queries with an answer, scores nothing:
+
+- The probe asks `monitored_address` under the zone, `1.0.0.127.zen.spamhaus.org` by default, which a working list does not list. With `random_monitored` it asks a random name of 8 to 31 letters and digits instead, the default for a zone that checks neither `from` nor `received`, or checks them with `no_ip`.
+- A probe that is not listed, NXDOMAIN or no address, passes. One that is answered, times out or fails is an error: each of the first two in a row brings the next probe sooner, and a third takes the zone offline. An offline zone is asked nothing until a probe passes again.
+- Probes start 6 to 12 seconds after the first worker boots, then come every 60 seconds times a multiplier, with up to as much again as jitter: it doubles up to 32 while the zone passes, halves on an error, and doubles from 2 up to 8 while the zone is offline.
+- The first worker alone probes and records each zone offline in the database, and every worker reads them every 5 seconds, so all skip the same zones. A zone going offline logs a warning and coming back logs at info, once. Two zones with the same name share one probe.
+- A zone starts online when mailscore starts. When the first worker restarts, its probes start over, and each zone's first probe replaces what was recorded before.
+
 ## Recommended lists
 
 `dnsbl: recommended` and `uribl: recommended` ask these lists, with their checks, return codes and weights written as settings in [lib/mailscore/dns_list/recommended.yml](../lib/mailscore/dns_list/recommended.yml).
@@ -118,5 +131,5 @@ mailscore fetches nothing over HTTP, and asks only what it reads from the messag
 - It asks every domain: no list of popular domains is kept out of the URL lists.
 - It does not follow redirectors or read URLs from PDFs and other attachments. `content_urls` and `urls` read the text parts and the Subject only.
 - When a message has more than 64 domains, it asks the first 64 it finds.
-- It asks every zone, with no background check of whether a zone still answers, and leaves a refusal to the `REFUSED` codes.
+- It leaves a refusal of a single query to the `REFUSED` codes: only a refused probe takes a zone offline.
 - It reads the address in a Received header's first comment, or after `from`, which covers the common Received formats.

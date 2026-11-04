@@ -98,6 +98,13 @@ class MailScore::ServerTest < MailScore::TestCase
     thread&.kill
   end
 
+  def test_a_worker_follows_the_dns_list_probes_only_with_lists_set
+    bl = { "zone" => "bl.example", "symbol" => "BL", "weight" => 4.0 }
+
+    assert_empty boot_worker(SETTINGS)
+    assert_equal 1, boot_worker(SETTINGS.merge("dnsbl" => [ bl ])).size
+  end
+
   def test_the_daemon_serves_from_several_workers
     port = TCPServer.open("127.0.0.1", 0) { it.addr[1] }
     pid = spawn(TOKENS, RbConfig.ruby, "-Ilib", EXE, write_config("port" => port, "workers" => 2), out: File::NULL, err: File::NULL)
@@ -143,6 +150,15 @@ class MailScore::ServerTest < MailScore::TestCase
   end
 
   private
+    def boot_worker(settings)
+      threads = Thread.list
+      app = Struct.new(:database).new(Object.new.tap { it.define_singleton_method(:execute) { |*| [] } })
+      MailScore::Server.new(MailScore::Config.parse(settings, env: TOKENS)).send(:puma_configuration, app).clamp[:before_worker_boot].first[:block].call(1)
+      Thread.list - threads
+    ensure
+      (Thread.list - threads).each(&:kill)
+    end
+
     def write_config(settings = {})
       File.join(@dir, "mailscore.yml").tap do |path|
         File.write(path, SETTINGS.merge("database" => File.join(@dir, "mailscore.sqlite3"), **settings).to_yaml)

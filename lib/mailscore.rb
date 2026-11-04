@@ -25,7 +25,7 @@ module MailScore
   LOG_FIELD_CAP = 64
 
   class << self
-    attr_writer :logger, :nameservers
+    attr_writer :logger, :nameservers, :offline_dns_lists
 
     # One line per scan, learn and fuzzy change, and the errors, to stdout.
     # Never message content, Subjects or addresses. See docs/deploy.md.
@@ -43,6 +43,12 @@ module MailScore
     # The nameservers DNS goes to, set at boot from the config. See Nameservers.
     def nameservers
       @nameservers ||= Nameservers.new(nil)
+    end
+
+    # The zones of the DNS lists offline, as this worker last read them. See
+    # DnsList::Monitor.
+    def offline_dns_lists
+      @offline_dns_lists ||= Set.new
     end
   end
 end

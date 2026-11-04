@@ -71,6 +71,13 @@ class MailScore::DatabaseTest < MailScore::TestCase
     assert_equal 0, MailScore::Stats.new(@database).to_h["too_large"]
   end
 
+  def test_dns_lists_offline_are_forgotten_with_the_server
+    @database.execute("INSERT INTO offline_dns_lists (zone) VALUES ('bl.example')")
+    @database.prepare
+
+    assert_empty @database.execute("SELECT zone FROM offline_dns_lists")
+  end
+
   def test_a_reputation_table_with_other_columns_is_replaced_and_a_current_one_kept
     path = File.join(Dir.mktmpdir, "old.sqlite3")
     SQLite3::Database.new(path) do |db|

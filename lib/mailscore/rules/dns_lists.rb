@@ -2,7 +2,7 @@ module MailScore
   module Rules
     # The DNS lists the +dnsbl+ and +uribl+ settings name, each asked about
     # what its checks find in the message and the session, unless it skips
-    # the sender.
+    # the sender or its probe has it offline.
     # Lists that +is_whitelist+ are asked first, and what they allow the
     # others are not asked about. Their symbols are in the rbl and surbl
     # groups.
@@ -20,7 +20,7 @@ module MailScore
       end
 
       def run(message, envelope)
-        lists = [ *@config.dnsbl, *@config.uribl ].reject { it.skips?(envelope) }
+        lists = [ *@config.dnsbl, *@config.uribl ].reject { it.skips?(envelope) || it.offline? }
         return [] if lists.empty?
 
         resolver = resolver(envelope)
