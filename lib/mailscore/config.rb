@@ -39,8 +39,9 @@ module MailScore
     PATH = "/etc/mailscore.yml"
     # Lowest first, each a score or off.
     ACTIONS = { "greylist" => 4, "add_header" => 6, "rewrite_subject" => false, "soft_reject" => false, "reject" => 15 }.freeze
-    # The cap on what URL DNS lists add together.
-    GROUPS = { "surbl" => { "max_score" => 12.5 }.freeze }.freeze
+    # The groups capped by default, and their caps.
+    GROUPS = { "headers" => { "max_score" => 8 }, "subject" => { "max_score" => 6 }, "phishing" => { "max_score" => 10 },
+      "mime_types" => { "max_score" => 10 }, "url" => { "max_score" => 9 }, "surbl" => { "max_score" => 12.5 } }.freeze
     # Every setting but fasttext_model, which is fasttext.bin beside the
     # database. workers is one per CPU. nil is none: no language model, the
     # system resolver, or autolearn scores that follow the thresholds.

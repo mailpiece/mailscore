@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- `groups` caps what a symbol group adds; `/symbols` gives each symbol's group
+- `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group
 
 ## 0.1.1
 

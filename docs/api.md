@@ -171,11 +171,20 @@ Every symbol belongs to one group, such as `headers`, `hfilter`, `policies`, `rb
 
 ```yaml
 groups:
-  surbl: { max_score: 12.5 }   # the default
-  headers: { max_score: 8 }
+  headers: { max_score: 0 }    # no cap
+  hfilter: { max_score: 6 }
 ```
 
-Symbols count in the order they fire. One that takes its group's total past `max_score` adds only what is left, and every later one of the same sign adds 0; a negative total stops at `min_score` the same way. A capped symbol still fires, with the weight it added, and the score, the action, reputation and autolearn all read that weight. `max_score` is 0 or more and `min_score` 0 or less; 0 is no cap. By default only `surbl` is capped, at 12.5, so link lists together weigh at most that.
+Symbols count in the order they fire. One that takes its group's total past `max_score` adds only what is left, and every later one of the same sign adds 0; a negative total stops at `min_score` the same way. A capped symbol still fires, with the weight it added, and the score, the action, reputation and autolearn all read that weight. `max_score` is 0 or more and `min_score` 0 or less; 0 is no cap. By default these groups are capped, and any other is uncapped:
+
+| Group | `max_score` |
+|---|---|
+| `headers` | 8 |
+| `subject` | 6 |
+| `phishing` | 10 |
+| `mime_types` | 10 |
+| `url` | 9 |
+| `surbl` | 12.5 |
 
 ## Rules
 
