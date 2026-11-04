@@ -19,6 +19,17 @@ class MailScore::ListTest < MailScore::TestCase
     assert_includes log, "list reloaded: #{@path}"
   end
 
+  def test_a_file_replaced_with_the_same_mtime_is_read_again
+    mtime = File.mtime(@path)
+    File.write("#{@path}.new", "goo.gl\n") # same size: only the inode tells
+    File.utime(mtime, mtime, "#{@path}.new")
+    File.rename("#{@path}.new", @path)
+
+    @now = MailScore::List::CHECK_EVERY
+    assert_includes @list, "goo.gl"
+    refute_includes @list, "bit.ly"
+  end
+
   def test_an_unchanged_file_is_not_read_again
     @now = MailScore::List::CHECK_EVERY
 

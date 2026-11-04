@@ -50,7 +50,7 @@ Leave `PUMA_DEBUG` unset in production. With it set, Puma writes the headers, th
 
 For ASN and country reputation, mount GeoLite2-ASN.mmdb and GeoLite2-Country.mmdb read-only, such as `-v /var/lib/GeoIP:/geoip:ro`, and set `asn_database` and `country_database` to them; downloading them, with `geoipupdate` or by hand, takes a free MaxMind account and its licence key, which stays on the host. Restart mailscore after an update: each worker keeps the files it opened.
 
-The `shorteners`, `trusted_redirectors`, `risky_extensions` and `archive_extensions` files can be replaced without a restart: each worker checks a file's mtime every 30 seconds and reads it again once it changes, keeping the last list, with a warning, while the file is missing or can't be read. Mount the directory that holds them, such as `-v /etc/mailscore/lists:/lists:ro`, rather than each file, and write a new file beside the old one and rename it over, so a worker never reads half a file.
+The `shorteners`, `trusted_redirectors`, `risky_extensions` and `archive_extensions` files can be replaced without a restart: each worker checks every 30 seconds whether a file changed and reads it again once it has, keeping the last list, with a warning, while the file is missing or can't be read. Mount the directory that holds them, such as `-v /etc/mailscore/lists:/lists:ro`, rather than each file, and write a new file beside the old one and rename it over, so a worker never reads half a file.
 
 ## Logs
 
