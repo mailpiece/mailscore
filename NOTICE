@@ -34,6 +34,34 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
+The URL shorteners in lib/mailscore/lists/shorteners.txt include the
+hosts of SpamAssassin's url_shortener list
+(https://github.com/apache/spamassassin, rules/25_url_shortener.cf),
+used under the Apache License, Version 2.0:
+
+This product includes software developed by the Apache Software
+Foundation (http://www.apache.org/).
+
+The link wrappers in lib/mailscore/lists/trusted_redirectors.txt include
+the hosts of Rspamd's trusted redirectors map
+(https://github.com/rspamd/rspamd,
+conf/maps.d/phishing_trusted_redirectors.inc), used under the Apache
+License, Version 2.0:
+
+Copyright (c) 2022, Vsevolod Stakhov <vsevolod@rspamd.com>
+
+Both are licensed under the Apache License, Version 2.0 (the "License");
+you may not use these files except in compliance with the License. You
+may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 The stop word lists in lib/mailscore/bayes/stop_words/ are Snowball's
 (https://snowballstem.org, https://github.com/snowballstem/snowball-website,
 algorithms/*/stop.txt), cut to their words, and are used under the
