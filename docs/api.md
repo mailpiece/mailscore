@@ -221,6 +221,8 @@ These symbols weigh 0.0 by default: they show in `symbols` and the log without m
 | `SCRIPT_SOURCE_HEADER` | the message carries `X-Source`, `X-Source-Args` or `X-Source-Dir` |
 | `SCRIPT_HIDDEN_PATH` | the sending script's path, in a PHP header or `X-Source-Args`, has a hidden file or directory, such as `/.cache/`, not `/../` |
 
+`ATTACHMENT_RISKY_EXTENSION` (2.0) also fires, at 0.0 whatever `scores` gives it, for an attachment whose first bytes show a program of a kind on the `risky_extensions` list, under a name that is not, such as a Windows executable named `invoice.pdf`. The kinds are `exe` (an `MZ` header pointing at a `PE` signature), `lnk`, and, when the list names them, `elf`, `macho` and `class`.
+
 ## `POST /learn/spam`, `POST /learn/ham`
 
 Teach the Bayes classifier. There is one, for all mail. The body is the raw message, sent again each time. Write token.
