@@ -5,7 +5,7 @@ module MailScore
     # [203.0.113.9], mailscore's own lookup found none.
     class HostnameUnknown < Rule
       NAME = "HOSTNAME_UNKNOWN"
-      GROUP = "hfilter"
+      GROUP = "hostname"
       WEIGHT = 2.5
       DESCRIPTION = "Sending server has no verified host name"
 

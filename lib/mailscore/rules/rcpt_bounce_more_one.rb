@@ -4,7 +4,7 @@ module MailScore
     # several recipients is not one.
     class RcptBounceMoreOne < Rule
       NAME = "BOUNCE_MANY_RECIPIENTS"
-      GROUP = "hfilter"
+      GROUP = "headers"
       WEIGHT = 1.5
       DESCRIPTION = "Bounce sent to several recipients"
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Groups renamed, `hfilter` to `hostname`, `rbl` to `dnsbl`, `surbl` to `uribl`, `neural` to `fasttext`: a `groups` setting naming an old one fails at boot as unknown
+- `LINK_ONLY` moves to the `url` group and `BOUNCE_MANY_RECIPIENTS` to `headers`, under their caps
+
 ## 0.2.0
 
 - `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group

@@ -6,7 +6,7 @@ module MailScore
     # link-local, a documentation range, or an IPv4 broadcast address.
     class HeloBadIp < Rule
       NAME = "HELO_PRIVATE_IP"
-      GROUP = "hfilter"
+      GROUP = "hostname"
       WEIGHT = 4.5
       DESCRIPTION = "Server greeted with a private address"
 

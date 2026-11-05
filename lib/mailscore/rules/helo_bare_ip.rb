@@ -7,7 +7,7 @@ module MailScore
     # address is HeloBadIp's instead.
     class HeloBareIp < Rule
       NAME = "HELO_IP_ADDRESS"
-      GROUP = "hfilter"
+      GROUP = "hostname"
       WEIGHT = 3.0
       DESCRIPTION = "Server greeted with an IP address"
 
