@@ -8,6 +8,7 @@ require "mailscore/rules/helo_bare_ip"
 require "mailscore/rules/helo_not_fqdn"
 require "mailscore/rules/helo_not_hostname"
 require "mailscore/rules/hostname_unknown"
+require "mailscore/rules/generic_hostname"
 require "mailscore/rules/missing_date"
 require "mailscore/rules/missing_mid"
 require "mailscore/rules/missing_from"
@@ -63,7 +64,7 @@ module MailScore
     CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive ].freeze
     ALL = [
       Bounce, RcptBounceMoreOne, Trap,
-      Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown,
+      Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown, GenericHostname,
       MissingDate, MissingMid, MissingFrom, MissingTo, InvalidMsgid, MultipleFrom, MultipleUniqueHeaders,
       InvalidDate, DateInFuture, DateInPast, SubjAllCaps,
       *CONTENT,

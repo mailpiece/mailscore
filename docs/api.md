@@ -210,6 +210,12 @@ Some symbols the caller relies on:
 - Mail from local networks and authenticated senders skips SPF, DKIM, DMARC, the HELO and PTR checks, the DNS lists that say so and `BOUNCE_MANY_RECIPIENTS`; ARC, header and content rules still run.
 - DNS lists for the client IP and for the domains a message carries are off by default. Each one the config names fires its own symbols; see [DNS lists](dns-lists.md).
 
+These symbols weigh 0.0 by default: they show in `symbols` and the log without moving the score, until `scores` gives them a weight.
+
+| Symbol | Fires when |
+|---|---|
+| `HOSTNAME_GENERIC_*`, `HELO_GENERIC_*` | the client's host name, or its HELO, reads like a home or dynamic line, such as `203-0-113-9.dynamic.example.net`, or the HELO names a private network, such as `router.lan`. The suffix is the likelihood, `VERY_LOW`, `LOW`, `MEDIUM`, `HIGH` or `VERY_HIGH`, and only the likelier of the two fires, the HELO on a tie |
+
 ## `POST /learn/spam`, `POST /learn/ham`
 
 Teach the Bayes classifier. There is one, for all mail. The body is the raw message, sent again each time. Write token.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `HOSTNAME_GENERIC_*` and `HELO_GENERIC_*` fire on a dynamic-looking host name or HELO, at weight 0
+
 ## 0.2.0
 
 - `groups` caps what a symbol group adds, six of them by default; `/symbols` gives each symbol's group
