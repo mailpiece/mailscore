@@ -201,6 +201,7 @@ Some symbols the caller relies on:
 - When SPF, DKIM, DMARC and ARC fail to run, `AUTHENTICATION_ERROR` (2.0) fires in place of all their symbols, so a message cannot shed an authentication failure by making the checks raise.
 - A DKIM signature whose `l=` leaves part of the body unsigned earns nothing: no `DKIM_PASS`, no DMARC alignment, no signer reputation and no DNS allow-list. Alone it fires `DKIM_PARTIAL_BODY` (0.5).
 - Bounces and mail from `<>` are scored like any other mail.
+- The standard anti-spam test string, in a text part of at most 8 KB, fires `SPAM_TEST_STRING` (0.0) and forces `reject` whatever the score, for checking a filter end to end. `scores` switching the symbol off stops it, and with `reject` switched off in `actions` the score decides.
 - A DMARC `p=reject` failure only adds weight. It never forces a reject, but a spoof still reaches `greylist` past every credit a sender can earn for itself: SPF and DKIM passes for its own domain, its own ARC seal and a bounce.
 - When `pct` leaves a failure out of the sample, `p=reject` counts as `p=quarantine`.
 - A single From field that names no single domain DMARC can check, such as an address only in a quoted name, fires `FROM_UNREADABLE` (7.5) in DMARC's place. Honest mail does not send one, and it shows a reader a sender no check can hold to account, so it weighs just under `FROM_MULTIPLE_ADDRESSES` (8.0), which shows several. Several addresses fire `FROM_MULTIPLE_ADDRESSES`, and none `FROM_MISSING`.

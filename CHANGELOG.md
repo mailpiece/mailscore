@@ -5,6 +5,7 @@
 - `HOSTNAME_GENERIC_*` and `HELO_GENERIC_*` fire on a dynamic-looking host name or HELO, at weight 0
 - Five symbols at weight 0 flag the headers a hacked site's script leaves, such as `PHP_SCRIPT_AS_ROOT`
 - `ATTACHMENT_RISKY_EXTENSION` also fires, at weight 0, on a program attached under a harmless name, found by its first bytes
+- `SPAM_TEST_STRING` fires on the standard anti-spam test string and forces reject, whatever the score, while reject is on
 
 ## 0.2.0
 

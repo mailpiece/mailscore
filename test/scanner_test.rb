@@ -79,6 +79,17 @@ class MailScore::ScannerTest < MailScore::TestCase
     end
   end
 
+  class ForcingRule < MailScore::Rule
+    NAME = "FORCING"
+    GROUP = "test"
+    WEIGHT = 0
+    DESCRIPTION = "Forces reject"
+
+    def run(message, _envelope)
+      MailScore::Hit.new(name: NAME, weight: WEIGHT, data: { action: "reject" }) if message.subject.to_s.include?(NAME)
+    end
+  end
+
   class Greylister
     def initialize(answer)
       @answer = answer
@@ -117,6 +128,15 @@ class MailScore::ScannerTest < MailScore::TestCase
 
     assert_equal "rewrite_subject", check("FIVE TEN", actions:).action
     assert_equal "no_action", check("FIVE", actions:).action
+  end
+
+  def test_a_hit_can_force_an_action_the_operator_left_on
+    verdict = check("FORCING MINUS", rules: [ ForcingRule, *RULES ], greylister: Greylister.new([ "soft_reject", nil ]))
+
+    assert_equal [ "reject", -0.1 ], [ verdict.action, verdict.score ]
+    assert_equal "no_action", check("FORCING", rules: [ ForcingRule ], actions: { "reject" => false }).action
+    assert_equal "add_header", check("FORCING FIVE TWO", rules: [ ForcingRule, *RULES ], actions: { "reject" => false }).action
+    assert_equal "no_action", check("FORCING", rules: [ ForcingRule ], scores: { "FORCING" => false }).action
   end
 
   def test_without_a_greylister_greylist_falls_to_no_action
