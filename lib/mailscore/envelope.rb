@@ -9,9 +9,11 @@ module MailScore
   # +deadline+ is the scan's, on the monotonic clock, and +lookups+ keeps
   # what the scan looked up once for all its rules; the scanner sets both.
   # +reverse_dns_status+ is the caller's lookup outcome, nil when absent or
-  # not one of REVERSE_DNS_STATUSES.
+  # not one of REVERSE_DNS_STATUSES. +unconfirmed_hostname+ is the name a
+  # PTR gave that did not resolve back, lowercased, nil unless a full host
+  # name: a rule may only add weight for it, never trust it.
   Envelope = Data.define(:ip, :helo, :hostname, :from, :mail_from, :recipients, :deliver_to, :user, :tls_version, :tls_cipher,
-    :queue_id, :local_networks, :deadline, :lookups, :reverse_dns_status) do
+    :queue_id, :local_networks, :deadline, :lookups, :reverse_dns_status, :unconfirmed_hostname) do
     REVERSE_DNS_STATUSES = %w[ confirmed unconfirmed none temporary_failure ].freeze
 
     def self.read(env, message, local_networks: [])
@@ -23,6 +25,7 @@ module MailScore
         helo: header["HELO"],
         hostname: header["HOSTNAME"],
         reverse_dns_status: header["REVERSE_DNS_STATUS"]&.downcase&.then { it if REVERSE_DNS_STATUSES.include?(it) },
+        unconfirmed_hostname: header["UNCONFIRMED_HOSTNAME"]&.chomp(".")&.downcase&.then { it if it.match?(Rules::HeloNotFqdn::FQDN) },
         from: mail_from || message.from_addresses.first,
         mail_from:,
         recipients: recipients(header["RCPT"]) || message.to_addresses,
@@ -35,7 +38,7 @@ module MailScore
         deadline: nil
     end
 
-    def initialize(lookups: {}, reverse_dns_status: nil, **)
+    def initialize(lookups: {}, reverse_dns_status: nil, unconfirmed_hostname: nil, **)
       super
     end
 

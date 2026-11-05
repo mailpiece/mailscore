@@ -40,6 +40,7 @@ Request headers, all optional:
 | `Helo` | HELO or EHLO argument |
 | `Hostname` | the client's verified reverse DNS name, or, when it has none, `unknown` or its address in brackets, such as `[203.0.113.9]` |
 | `Reverse-DNS-Status` | how the caller's reverse DNS lookup went: `confirmed`, `unconfirmed`, `none` or `temporary_failure` |
+| `Unconfirmed-Hostname` | the name the client's PTR record gave when it did not resolve back to the client IP |
 | `From` | envelope sender, `<>` for a null sender |
 | `Rcpt` | one envelope recipient, repeated for each |
 | `Deliver-To` | the final delivery address, when the caller knows it |
@@ -53,6 +54,7 @@ Request headers, all optional:
 - Without `IP`, checks that need the client IP do not fire.
 - Without `Hostname`, or with only the address in brackets, mailscore looks up the client IP's PTR record itself, within the scan budget, and takes the first name as the client's host name without checking it resolves back. No PTR record fires `REVERSE_DNS_NONE` (2.0) and `HOSTNAME_UNKNOWN`. A lookup that timed out or got a server failure says nothing either way and fires only `REVERSE_DNS_LOOKUP_FAILED` (0.0). `unknown` fires `HOSTNAME_UNKNOWN` with no lookup. Local networks and authenticated senders are not looked up.
 - `Reverse-DNS-Status: temporary_failure` says the caller's own lookup timed out or got a server failure. mailscore does not look up again and fires only `REVERSE_DNS_LOOKUP_FAILED` (0.0), whatever `Hostname` says. A caller that skipped its lookup leaves the header out, so mailscore looks up itself. The other values, and any value not listed, change nothing.
+- `Unconfirmed-Hostname` is anyone's to claim, since whoever controls the client IP's reverse zone writes it. mailscore never takes it as the client's host name, so it never stands in for `Hostname`, never lowers a score and never passes a check; a rule may only add weight for it. A value that is not a full host name, with at least one dot, only letters, digits and hyphens in its labels and at most 253 characters, is ignored.
 - mailscore runs SPF, DKIM, DMARC and ARC itself.
 
 Response, one verdict for the message:
