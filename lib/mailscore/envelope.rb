@@ -8,8 +8,12 @@ module MailScore
   # alone, nil without a From header. +local_networks+ are the config's.
   # +deadline+ is the scan's, on the monotonic clock, and +lookups+ keeps
   # what the scan looked up once for all its rules; the scanner sets both.
+  # +reverse_dns_status+ is the caller's lookup outcome, nil when absent or
+  # not one of REVERSE_DNS_STATUSES.
   Envelope = Data.define(:ip, :helo, :hostname, :from, :mail_from, :recipients, :deliver_to, :user, :tls_version, :tls_cipher,
-    :queue_id, :local_networks, :deadline, :lookups) do
+    :queue_id, :local_networks, :deadline, :lookups, :reverse_dns_status) do
+    REVERSE_DNS_STATUSES = %w[ confirmed unconfirmed none temporary_failure ].freeze
+
     def self.read(env, message, local_networks: [])
       header = ->(name) { header(env, name) }
       mail_from = header["FROM"]&.then { unbracketed(it) }
@@ -18,6 +22,7 @@ module MailScore
         ip: header["IP"],
         helo: header["HELO"],
         hostname: header["HOSTNAME"],
+        reverse_dns_status: header["REVERSE_DNS_STATUS"]&.downcase&.then { it if REVERSE_DNS_STATUSES.include?(it) },
         from: mail_from || message.from_addresses.first,
         mail_from:,
         recipients: recipients(header["RCPT"]) || message.to_addresses,
@@ -30,7 +35,7 @@ module MailScore
         deadline: nil
     end
 
-    def initialize(lookups: {}, **)
+    def initialize(lookups: {}, reverse_dns_status: nil, **)
       super
     end
 
@@ -67,10 +72,13 @@ module MailScore
     end
 
     # The client's reverse DNS, looked up once per scan when the caller sent
-    # no Hostname, or only the address in brackets. nil for a trusted sender
-    # or without a client IP.
+    # no Hostname, or only the address in brackets. Failed, with no lookup,
+    # when the caller's own lookup failed. nil for a trusted sender or
+    # without a client IP.
     def reverse_dns(resolver)
-      return if (hostname && !hostname.start_with?("[")) || !address || trusted?
+      return if !address || trusted?
+      return ReverseDns.new(hostname: nil, status: "failed") if reverse_dns_status == "temporary_failure"
+      return if hostname && !hostname.start_with?("[")
       lookups.fetch(:reverse_dns) { lookups[:reverse_dns] = ReverseDns.lookup(address, resolver) }
     end
 

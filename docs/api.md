@@ -39,6 +39,7 @@ Request headers, all optional:
 | `IP` | client IP |
 | `Helo` | HELO or EHLO argument |
 | `Hostname` | the client's verified reverse DNS name, or, when it has none, `unknown` or its address in brackets, such as `[203.0.113.9]` |
+| `Reverse-DNS-Status` | how the caller's reverse DNS lookup went: `confirmed`, `unconfirmed`, `none` or `temporary_failure` |
 | `From` | envelope sender, `<>` for a null sender |
 | `Rcpt` | one envelope recipient, repeated for each |
 | `Deliver-To` | the final delivery address, when the caller knows it |
@@ -50,7 +51,8 @@ Request headers, all optional:
 - `Rcpt` may be repeated or carry a comma-separated list.
 - Without `From` or `Rcpt`, mailscore reads the message's own `From` and `To`, which the sender writes as it likes. Traps, greylisting and the bounce checks then go by them, so a caller should always send the envelope it saw.
 - Without `IP`, checks that need the client IP do not fire.
-- Without `Hostname`, or with only the address in brackets, mailscore looks up the client IP's PTR record itself, within the scan budget, and takes the first name as the client's host name without checking it resolves back. No PTR record fires `REVERSE_DNS_NONE` (2.0) and `HOSTNAME_UNKNOWN`. A lookup with no answer in time fires `REVERSE_DNS_LOOKUP_FAILED` (0.0) and both of those. `unknown` fires `HOSTNAME_UNKNOWN` with no lookup. Local networks and authenticated senders are not looked up.
+- Without `Hostname`, or with only the address in brackets, mailscore looks up the client IP's PTR record itself, within the scan budget, and takes the first name as the client's host name without checking it resolves back. No PTR record fires `REVERSE_DNS_NONE` (2.0) and `HOSTNAME_UNKNOWN`. A lookup that timed out or got a server failure says nothing either way and fires only `REVERSE_DNS_LOOKUP_FAILED` (0.0). `unknown` fires `HOSTNAME_UNKNOWN` with no lookup. Local networks and authenticated senders are not looked up.
+- `Reverse-DNS-Status: temporary_failure` says the caller's own lookup timed out or got a server failure. mailscore does not look up again and fires only `REVERSE_DNS_LOOKUP_FAILED` (0.0), whatever `Hostname` says. A caller that skipped its lookup leaves the header out, so mailscore looks up itself. The other values, and any value not listed, change nothing.
 - mailscore runs SPF, DKIM, DMARC and ARC itself.
 
 Response, one verdict for the message:
