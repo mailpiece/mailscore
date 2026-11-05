@@ -215,6 +215,11 @@ These symbols weigh 0.0 by default: they show in `symbols` and the log without m
 | Symbol | Fires when |
 |---|---|
 | `HOSTNAME_GENERIC_*`, `HELO_GENERIC_*` | the client's host name, or its HELO, reads like a home or dynamic line, such as `203-0-113-9.dynamic.example.net`, or the HELO names a private network, such as `router.lan`. The suffix is the likelihood, `VERY_LOW`, `LOW`, `MEDIUM`, `HIGH` or `VERY_HIGH`, and only the likelier of the two fires, the HELO on a tie |
+| `PHP_SCRIPT_HEADER` | the message carries `X-PHP-Originating-Script` or `X-PHP-Script`, as a PHP script on a web server adds |
+| `PHP_SCRIPT_AS_ROOT` | `X-PHP-Originating-Script` names uid 0 |
+| `PHP_SCRIPT_EVAL` | either PHP header names eval'd code |
+| `SCRIPT_SOURCE_HEADER` | the message carries `X-Source`, `X-Source-Args` or `X-Source-Dir` |
+| `SCRIPT_HIDDEN_PATH` | the sending script's path, in a PHP header or `X-Source-Args`, has a hidden file or directory, such as `/.cache/`, not `/../` |
 
 ## `POST /learn/spam`, `POST /learn/ham`
 
