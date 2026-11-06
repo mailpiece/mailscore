@@ -228,6 +228,19 @@ class MailScore::AppTest < MailScore::TestCase
     assert_equal %w[ HOSTNAME_UNKNOWN ], names["203.0.113.9"]
   end
 
+  def test_check_reports_reverse_dns_without_scoring_it
+    @app = MailScore::App.new(@config, database: @database, rules: [ MailScore::Rules::Rdns, MailScore::Rules::HostnameUnknown ])
+    verdict = ->(headers) do
+      answer = JSON.parse(check("Subject: x\n\nbody", "HTTP_IP" => "203.0.113.9", **headers).body)
+      [ answer["score"], answer["symbols"].map { [ it["name"], it["weight"], it["description"] ] } ]
+    end
+    unknown = [ "HOSTNAME_UNKNOWN", 0.0, "Sending server has no verified host name" ]
+
+    assert_equal [ 0.0, [ unknown ] ], verdict[{ "HTTP_HOSTNAME" => "unknown", "HTTP_REVERSE_DNS_STATUS" => "none" }]
+    assert_equal [ 0.0, [ unknown ] ], verdict[{ "HTTP_HOSTNAME" => "unknown", "HTTP_REVERSE_DNS_STATUS" => "unconfirmed", "HTTP_UNCONFIRMED_HOSTNAME" => "host.example.net" }]
+    assert_equal [ 0.0, [ [ "REVERSE_DNS_LOOKUP_FAILED", 0.0, "Reverse DNS lookup failed" ] ] ], verdict[{ "HTTP_REVERSE_DNS_STATUS" => "temporary_failure" }]
+  end
+
   def test_check_takes_the_read_token
     assert_equal 401, check("Subject: x\n\nbody", token: nil).status
     assert_equal 200, check("Subject: x\n\nbody", token: "write-token-00000000000000000000").status

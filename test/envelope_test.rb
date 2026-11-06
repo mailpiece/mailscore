@@ -23,6 +23,40 @@ class MailScore::EnvelopeTest < MailScore::TestCase
     assert_equal "4Xyz", envelope.queue_id
   end
 
+  def test_the_reverse_dns_status_is_one_of_the_known_values
+    assert_equal "temporary_failure", read("HTTP_REVERSE_DNS_STATUS" => " Temporary_Failure ").reverse_dns_status
+    assert_equal "confirmed", read("HTTP_REVERSE_DNS_STATUS" => "confirmed").reverse_dns_status
+    assert_nil read("HTTP_REVERSE_DNS_STATUS" => "timeout").reverse_dns_status
+    assert_nil read({}).reverse_dns_status
+  end
+
+  def test_the_reverse_dns_status_is_optional_when_built_by_position
+    envelope = MailScore::Envelope.new("203.0.113.9", "mx.example.com", nil, "a@example.com", nil, [ "b@example.net" ], nil, nil, nil, nil, nil, [], nil)
+
+    assert_nil envelope.reverse_dns_status
+    assert_nil envelope.unconfirmed_hostname
+    assert_equal({}, envelope.lookups)
+  end
+
+  def test_an_unconfirmed_hostname_is_kept_only_as_a_full_host_name
+    assert_equal "host-203-0-113-9.example.net", read("HTTP_UNCONFIRMED_HOSTNAME" => "Host-203-0-113-9.Example.NET.").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "localhost").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "[203.0.113.9]").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "mx-1.").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "bad_name.example.com").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "_dmarc.example.com").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "#{"a" * 64}.example.com").unconfirmed_hostname
+    assert_nil read("HTTP_UNCONFIRMED_HOSTNAME" => "#{"a." * 126}com").unconfirmed_hostname
+    assert_nil read({}).unconfirmed_hostname
+  end
+
+  def test_an_unconfirmed_hostname_is_never_the_hostname
+    envelope = read("HTTP_IP" => "203.0.113.9", "HTTP_HOSTNAME" => "unknown", "HTTP_UNCONFIRMED_HOSTNAME" => "mx.example.com")
+
+    assert_equal "unknown", envelope.client_hostname(nil)
+    assert_equal "mx.example.com", envelope.unconfirmed_hostname
+  end
+
   def test_repeated_rcpt_headers_arrive_joined_and_blanks_are_dropped
     assert_equal [ "a@example.net", "b@example.net" ], read("HTTP_RCPT" => " <a@example.net> ,, b@example.net, ").recipients
     assert_equal [ "one@example.net", "two@example.net" ], read("HTTP_RCPT" => ", ,").recipients
