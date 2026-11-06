@@ -20,7 +20,7 @@ class MailScore::Rules::RdnsTest < MailScore::TestCase
   def test_no_ptr_record
     hits = run_rules(ip: "192.0.2.1", helo: "mx.example.com")
 
-    assert_equal [ [ "REVERSE_DNS_NONE", 2.0, "192.0.2.1" ], [ "HOSTNAME_UNKNOWN", 2.5, "192.0.2.1" ] ], hits.map { [ it.name, it.weight, it.detail ] }
+    assert_equal [ [ "REVERSE_DNS_NONE", 0.0, "192.0.2.1" ], [ "HOSTNAME_UNKNOWN", 0.0, "192.0.2.1" ] ], hits.map { [ it.name, it.weight, it.detail ] }
   end
 
   def test_a_failed_lookup_says_nothing_either_way

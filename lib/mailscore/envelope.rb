@@ -11,7 +11,7 @@ module MailScore
   # +reverse_dns_status+ is the caller's lookup outcome, nil when absent or
   # not one of REVERSE_DNS_STATUSES. +unconfirmed_hostname+ is the name a
   # PTR gave that did not resolve back, lowercased, nil unless a full host
-  # name: a rule may only add weight for it, never trust it.
+  # name, never trusted as the client's name.
   Envelope = Data.define(:ip, :helo, :hostname, :from, :mail_from, :recipients, :deliver_to, :user, :tls_version, :tls_cipher,
     :queue_id, :local_networks, :deadline, :lookups, :reverse_dns_status, :unconfirmed_hostname) do
     REVERSE_DNS_STATUSES = %w[ confirmed unconfirmed none temporary_failure ].freeze

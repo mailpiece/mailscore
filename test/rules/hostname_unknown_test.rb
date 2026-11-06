@@ -6,7 +6,7 @@ class MailScore::Rules::HostnameUnknownTest < MailScore::TestCase
     hit = run_rule("unknown")
 
     assert_equal "203.0.113.9", hit.detail
-    assert_equal 2.5, hit.weight
+    assert_equal 0.0, hit.weight
     assert run_rule("UNKNOWN")
   end
 

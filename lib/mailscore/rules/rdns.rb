@@ -4,13 +4,14 @@ module MailScore
     # brackets, mailscore looks up the client's reverse DNS itself. No PTR
     # record fires REVERSE_DNS_NONE. A lookup that failed, mailscore's or the
     # caller's, says nothing either way: it fires only
-    # REVERSE_DNS_LOOKUP_FAILED, which weighs nothing, so the cause shows.
+    # REVERSE_DNS_LOOKUP_FAILED. Both weigh nothing, so the verdict shows the
+    # outcome without scoring it.
     class Rdns < Rule
       NAME = "REVERSE_DNS"
       GROUP = "hfilter"
 
       SYMBOLS = {
-        "REVERSE_DNS_NONE" => [ 2.0, "No reverse DNS for the sending server" ],
+        "REVERSE_DNS_NONE" => [ 0.0, "No reverse DNS for the sending server" ],
         "REVERSE_DNS_LOOKUP_FAILED" => [ 0.0, "Reverse DNS lookup failed" ]
       }.freeze
 
