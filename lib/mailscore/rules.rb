@@ -8,6 +8,7 @@ require "mailscore/rules/helo_bare_ip"
 require "mailscore/rules/helo_not_fqdn"
 require "mailscore/rules/helo_not_hostname"
 require "mailscore/rules/hostname_unknown"
+require "mailscore/rules/generic_hostname"
 require "mailscore/rules/missing_date"
 require "mailscore/rules/missing_mid"
 require "mailscore/rules/missing_from"
@@ -19,6 +20,7 @@ require "mailscore/rules/invalid_date"
 require "mailscore/rules/date_in_future"
 require "mailscore/rules/date_in_past"
 require "mailscore/rules/subj_all_caps"
+require "mailscore/rules/compromised_host"
 require "mailscore/rules/authentication"
 require "mailscore/rules/http_to_ip"
 require "mailscore/rules/dns_lists"
@@ -35,6 +37,7 @@ require "mailscore/rules/mime_base64_text_bogus"
 require "mailscore/rules/mime_bad_extension"
 require "mailscore/rules/mime_double_bad_extension"
 require "mailscore/rules/mime_archive_in_archive"
+require "mailscore/rules/test_string"
 require "mailscore/rules/fuzzy_match"
 require "mailscore/rules/bayes"
 require "mailscore/rules/fasttext"
@@ -44,8 +47,8 @@ module MailScore
   # What a rule returns when it fires. A detail read from the message or
   # the session may carry any bytes, so a string one is kept as UTF-8,
   # scrubbed, for the JSON answer. +data+ is what the rule found for the
-  # code after it, such as the DKIM signers reputation reads, and never
-  # reaches the answer.
+  # code after it, such as the DKIM signers reputation reads, or the
+  # { action: } it forces, and never reaches the answer.
   Hit = Data.define(:name, :weight, :detail, :data) do
     def initialize(name:, weight:, detail: nil, data: nil)
       detail = detail.dup.force_encoding(Encoding::UTF_8).scrub if detail.is_a?(String)
@@ -60,12 +63,12 @@ module MailScore
   # and may return a list. +GROUP+ is the group its symbols are capped in.
   # +ALL+ is the catalogue `/symbols` lists and `/check` runs.
   module Rules
-    CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive ].freeze
+    CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive, TestString ].freeze
     ALL = [
       Bounce, RcptBounceMoreOne, Trap,
-      Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown,
+      Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown, GenericHostname,
       MissingDate, MissingMid, MissingFrom, MissingTo, InvalidMsgid, MultipleFrom, MultipleUniqueHeaders,
-      InvalidDate, DateInFuture, DateInPast, SubjAllCaps,
+      InvalidDate, DateInFuture, DateInPast, SubjAllCaps, CompromisedHost,
       *CONTENT,
       FuzzyMatch,
       Authentication,
