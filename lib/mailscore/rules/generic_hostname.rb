@@ -7,7 +7,7 @@ module MailScore
     # without a dot HeloNotFqdn's.
     class GenericHostname < Rule
       NAME = "GENERIC_HOSTNAME"
-      GROUP = "hfilter"
+      GROUP = "hostname"
 
       LEVELS = %w[ VERY_LOW LOW MEDIUM HIGH VERY_HIGH ].freeze
       SYMBOLS = { "HOSTNAME" => "Host name", "HELO" => "Server greeting" }.flat_map do |kind, label|
