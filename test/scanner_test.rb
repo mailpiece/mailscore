@@ -1,7 +1,7 @@
 require "test_helper"
 
 class MailScore::ScannerTest < MailScore::TestCase
-  def self.rule(name, weight, group = "hfilter")
+  def self.rule(name, weight, group = "hostname")
     Class.new(MailScore::Rule) do
       const_set(:NAME, name)
       const_set(:GROUP, group)
@@ -15,7 +15,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class SlowRule < MailScore::Rule
     NAME = "SLOW"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     WEIGHT = 1
     DESCRIPTION = "Takes its time"
 
@@ -27,7 +27,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class PatientRule < MailScore::Rule
     NAME = "PATIENT"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     WEIGHT = 1
     DESCRIPTION = "Reports the time left"
 
@@ -38,7 +38,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class PairRule < MailScore::Rule
     NAME = "PAIR"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     SYMBOLS = { "LEFT" => [ 1, "Left" ], "RIGHT" => [ 2, "Right" ] }.freeze
 
     def run(_message, _envelope)
@@ -48,7 +48,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class HalfRule < MailScore::Rule
     NAME = "HALF"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     WEIGHT = 4
     DESCRIPTION = "Fires at half its weight"
 
@@ -59,7 +59,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class StoredRule < MailScore::Rule
     NAME = "STORED"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     WEIGHT = 0
     DESCRIPTION = "Reads the config and the database"
 
@@ -70,7 +70,7 @@ class MailScore::ScannerTest < MailScore::TestCase
 
   class FailingRule < MailScore::Rule
     NAME = "FAILING"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     WEIGHT = 1
     DESCRIPTION = "Raises"
 
@@ -314,7 +314,7 @@ class MailScore::ScannerTest < MailScore::TestCase
   end
 
   def test_a_hit_past_its_groups_max_score_adds_what_is_left_and_later_ones_nothing
-    verdict = check("FIVE TWO TEN MINUS", groups: { "hfilter" => { "max_score" => 6 } })
+    verdict = check("FIVE TWO TEN MINUS", groups: { "hostname" => { "max_score" => 6 } })
 
     assert_equal [ [ "FIVE", 5 ], [ "TWO", 1.0 ], [ "TEN", 0.0 ], [ "MINUS", -0.1 ] ], verdict.hits.map { [ it.name, it.weight ] }
     assert_equal 5.9, verdict.score
@@ -322,7 +322,7 @@ class MailScore::ScannerTest < MailScore::TestCase
   end
 
   def test_a_negative_total_stops_at_the_groups_min_score
-    verdict = check("MINUS", groups: { "hfilter" => { "min_score" => -0.05 } })
+    verdict = check("MINUS", groups: { "hostname" => { "min_score" => -0.05 } })
 
     assert_equal [ -0.05 ], verdict.hits.map(&:weight)
     assert_equal(-0.05, verdict.score)
@@ -335,10 +335,10 @@ class MailScore::ScannerTest < MailScore::TestCase
   end
 
   def test_url_dns_lists_add_at_most_twelve_and_a_half_by_default
-    rules = [ self.class.rule("FIVE", 5, "surbl"), self.class.rule("TEN", 10, "surbl"), RULES[1] ]
+    rules = [ self.class.rule("FIVE", 5, "uribl"), self.class.rule("TEN", 10, "uribl"), RULES[1] ]
 
     assert_equal [ 5, 7.5, 2 ], check("FIVE TEN TWO", rules:).hits.map(&:weight)
-    assert_equal [ 5, 10, 2 ], check("FIVE TEN TWO", rules:, groups: { "surbl" => { "max_score" => 0 } }).hits.map(&:weight)
+    assert_equal [ 5, 10, 2 ], check("FIVE TEN TWO", rules:, groups: { "uribl" => { "max_score" => 0 } }).hits.map(&:weight)
   end
 
   def test_what_is_left_under_a_cap_is_rounded
@@ -411,9 +411,9 @@ class MailScore::ScannerTest < MailScore::TestCase
   end
 
   def test_an_unknown_group_fails
-    error = assert_raises(MailScore::ConfigError) { check("FIVE", groups: { "uribl" => { "max_score" => 12.5 } }) }
+    error = assert_raises(MailScore::ConfigError) { check("FIVE", groups: { "hfilter" => { "max_score" => 12.5 } }) }
 
-    assert_equal "unknown group: uribl", error.message
+    assert_equal "unknown group: hfilter", error.message
   end
 
   def test_every_rule_is_built_with_the_config_and_the_database

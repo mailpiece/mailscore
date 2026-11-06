@@ -168,12 +168,12 @@ A cap no ordinary mail reaches weighs a little; one a long newsletter may reach 
 
 ## Groups
 
-Every symbol belongs to one group, such as `headers`, `hfilter`, `policies`, `rbl` for `dnsbl` lists and `surbl` for `uribl` lists. `/symbols` gives each symbol's group. The `groups` setting caps what a group adds with `max_score` and `min_score`:
+Every symbol belongs to one group, such as `headers`, `hostname`, `policies`, `dnsbl` for `dnsbl` lists and `uribl` for `uribl` lists. `/symbols` gives each symbol's group. The `groups` setting caps what a group adds with `max_score` and `min_score`:
 
 ```yaml
 groups:
   headers: { max_score: 0 }    # no cap
-  hfilter: { max_score: 6 }
+  hostname: { max_score: 6 }
 ```
 
 Symbols count in the order they fire. One that takes its group's total past `max_score` adds only what is left, and every later one of the same sign adds 0; a negative total stops at `min_score` the same way. A capped symbol still fires, with the weight it added, and the score, the action, reputation and autolearn all read that weight. `max_score` is 0 or more and `min_score` 0 or less; 0 is no cap. By default these groups are capped, and any other is uncapped:
@@ -185,7 +185,7 @@ Symbols count in the order they fire. One that takes its group's total past `max
 | `phishing` | 10 |
 | `mime_types` | 10 |
 | `url` | 9 |
-| `surbl` | 12.5 |
+| `uribl` | 12.5 |
 
 ## Rules
 
@@ -292,7 +292,7 @@ The flags are a setting, and these three are the default.
 - `ping`: no token. `200` and `pong` as plain text, for container health checks.
 - `health`: read token. `200` and `{"status": "ok", "version": "0.2.0"}` when the database opens. `503` otherwise.
 - `stats`: read token. Counters since start, such as scans per action, budget overruns, rule errors, scan errors, learns, autolearns and fuzzy matches. Never message content or addresses. Under `fasttext`, the model in place: its accuracy on held-out samples and the spam and ham samples it learned from, and the time of the last training, swapped in or not, as `{"trained_at": "2026-11-03T03:00:00Z", "accuracy": 0.97, "spam_samples": 4000, "ham_samples": 4000}`, with nulls before any.
-- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name", "group": "hfilter" } ]`, each at the weight in use. A symbol `scores` switches off keeps its default weight and adds `"disabled": true`. A description is a short label, such as "No reverse DNS for the sending server".
+- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name", "group": "hostname" } ]`, each at the weight in use. A symbol `scores` switches off keeps its default weight and adds `"disabled": true`. A description is a short label, such as "No reverse DNS for the sending server".
 
 ## Errors
 

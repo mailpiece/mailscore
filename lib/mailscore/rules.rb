@@ -98,7 +98,7 @@ module MailScore
 
     # Every group the +groups+ setting may cap.
     def self.groups
-      scanned.flat_map { it.const_defined?(:GROUPS) ? it::GROUPS.values : it::GROUP }.uniq
+      scanned.flat_map { it.const_defined?(:GROUPS) ? it::GROUPS : it::GROUP }.uniq
     end
   end
 end
