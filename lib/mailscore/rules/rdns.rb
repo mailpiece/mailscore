@@ -8,7 +8,7 @@ module MailScore
     # outcome without scoring it.
     class Rdns < Rule
       NAME = "REVERSE_DNS"
-      GROUP = "hfilter"
+      GROUP = "hostname"
 
       SYMBOLS = {
         "REVERSE_DNS_NONE" => [ 0.0, "No reverse DNS for the sending server" ],

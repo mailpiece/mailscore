@@ -5,7 +5,7 @@ module MailScore
     # Plenty of honest servers differ, so it weighs little.
     class HeloNotHostname < Rule
       NAME = "HELO_HOSTNAME_MISMATCH"
-      GROUP = "hfilter"
+      GROUP = "hostname"
       WEIGHT = 0.3
       DESCRIPTION = "Server greeting does not match its host name"
 

@@ -5,6 +5,7 @@
 - A reverse DNS lookup that failed, mailscore's or the caller's (`Reverse-DNS-Status: temporary_failure`), fires only `REVERSE_DNS_LOOKUP_FAILED`, not a missing name
 - `Unconfirmed-Hostname` takes the PTR name that did not resolve back, never trusted as the client's name
 - `REVERSE_DNS_NONE` and `HOSTNAME_UNKNOWN` weigh 0 by default, like `REVERSE_DNS_LOOKUP_FAILED`: reverse DNS is reported, never scored
+- Groups renamed, `hfilter` to `hostname`, `rbl` to `dnsbl`, `surbl` to `uribl`, `neural` to `fasttext`: a `groups` setting naming an old one fails at boot as unknown
 
 ## 0.2.0
 

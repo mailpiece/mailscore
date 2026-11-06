@@ -323,17 +323,17 @@ class MailScore::ConfigTest < MailScore::TestCase
   end
 
   def test_groups_have_default_caps
-    caps = { "headers" => 8.0, "subject" => 6.0, "phishing" => 10.0, "mime_types" => 10.0, "url" => 9.0, "surbl" => 12.5 }
+    caps = { "headers" => 8.0, "subject" => 6.0, "phishing" => 10.0, "mime_types" => 10.0, "url" => 9.0, "uribl" => 12.5 }
 
     assert_equal caps.transform_values { MailScore::Config::Group.new(max_score: it, min_score: nil) }, parse(SETTINGS).groups
   end
 
   def test_a_group_left_out_or_a_score_a_group_leaves_out_keeps_its_default
-    groups = parse(SETTINGS.merge("groups" => { "headers" => { "max_score" => 0 }, "surbl" => { "min_score" => -2 }, "hfilter" => { "max_score" => 5 } })).groups
+    groups = parse(SETTINGS.merge("groups" => { "headers" => { "max_score" => 0 }, "uribl" => { "min_score" => -2 }, "hostname" => { "max_score" => 5 } })).groups
 
     assert_equal MailScore::Config::Group.new(max_score: 0.0, min_score: nil), groups["headers"]
-    assert_equal MailScore::Config::Group.new(max_score: 12.5, min_score: -2.0), groups["surbl"]
-    assert_equal MailScore::Config::Group.new(max_score: 5.0, min_score: nil), groups["hfilter"]
+    assert_equal MailScore::Config::Group.new(max_score: 12.5, min_score: -2.0), groups["uribl"]
+    assert_equal MailScore::Config::Group.new(max_score: 5.0, min_score: nil), groups["hostname"]
     assert_equal 9.0, groups["url"].max_score
   end
 

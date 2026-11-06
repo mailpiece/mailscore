@@ -16,7 +16,7 @@ Most of these lists are free only for non-commercial, low-volume use, and each h
 
 ## Settings
 
-Two settings list zones, or say `recommended`, and take the same keys. `dnsbl` is for lists about the client, and its zones ask about the client IP unless they say otherwise. `uribl` is for lists about domains, and its zones ask about URLs unless they say otherwise. `dnsbl` symbols are in the `rbl` group and `uribl` symbols in `surbl`, which by default weighs at most 12.5 per message; see [Groups](api.md#groups).
+Two settings list zones, or say `recommended`, and take the same keys. `dnsbl` is for lists about the client, and its zones ask about the client IP unless they say otherwise. `uribl` is for lists about domains, and its zones ask about URLs unless they say otherwise. `dnsbl` symbols are in the `dnsbl` group and `uribl` symbols in `uribl`, which by default weighs at most 12.5 per message; see [Groups](api.md#groups).
 
 ```yaml
 dnsbl:

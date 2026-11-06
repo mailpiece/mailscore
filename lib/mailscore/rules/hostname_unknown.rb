@@ -7,7 +7,7 @@ module MailScore
     # nothing, so the verdict shows it without scoring it.
     class HostnameUnknown < Rule
       NAME = "HOSTNAME_UNKNOWN"
-      GROUP = "hfilter"
+      GROUP = "hostname"
       WEIGHT = 0.0
       DESCRIPTION = "Sending server has no verified host name"
 

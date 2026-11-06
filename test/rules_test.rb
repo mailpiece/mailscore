@@ -23,12 +23,19 @@ class MailScore::RulesTest < MailScore::TestCase
       MailScore::Rules.catalogue([ rule ])
   end
 
-  def test_dns_lists_are_in_the_rbl_and_surbl_groups
+  def test_link_only_and_bounce_many_recipients_are_in_a_group_with_no_cap
+    groups = MailScore::Config.parse(SETTINGS, env: TOKENS).groups
+
+    assert_nil groups[MailScore::Rules::UrlOnly::GROUP]
+    assert_nil groups[MailScore::Rules::RcptBounceMoreOne::GROUP]
+  end
+
+  def test_dns_lists_are_in_the_dnsbl_and_uribl_groups
     list = ->(symbol) { { "zone" => "#{symbol.downcase}.example", "symbol" => symbol, "weight" => 1 } }
     config = MailScore::Config.parse(SETTINGS.merge("dnsbl" => [ list.("ZEN") ], "uribl" => [ list.("DBL") ]), env: TOKENS)
 
     groups = MailScore::Rules.catalogue([ MailScore::Rules::DnsLists ], config:).to_h { [ it[:name], it[:group] ] }
-    assert_equal({ "ZEN" => "rbl", "ZEN_LOOKUP_FAILED" => "rbl", "DBL" => "surbl", "DBL_LOOKUP_FAILED" => "surbl" }, groups)
+    assert_equal({ "ZEN" => "dnsbl", "ZEN_LOOKUP_FAILED" => "dnsbl", "DBL" => "uribl", "DBL_LOOKUP_FAILED" => "uribl" }, groups)
   end
 
   def test_a_rule_returns_a_hit_or_nil

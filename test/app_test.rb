@@ -10,7 +10,7 @@ class MailScore::AppTest < MailScore::TestCase
 
   class ExampleRule < MailScore::Rule
     NAME = "EXAMPLE"
-    GROUP = "hfilter"
+    GROUP = "hostname"
     WEIGHT = 1.5
     DESCRIPTION = "Fires on example mail"
 
@@ -75,7 +75,7 @@ class MailScore::AppTest < MailScore::TestCase
 
     symbols = JSON.parse(response.body)
 
-    assert_equal({ "name" => "EXAMPLE", "weight" => 1.5, "description" => "Fires on example mail", "group" => "hfilter" }, symbols.first)
+    assert_equal({ "name" => "EXAMPLE", "weight" => 1.5, "description" => "Fires on example mail", "group" => "hostname" }, symbols.first)
     assert_equal({ "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "Scan failed", "group" => "scan" }, symbols.last)
     assert_equal [ "EXAMPLE", *MailScore::Limits::SYMBOLS.keys, *MailScore::Reputation::SYMBOLS.keys, "GREYLISTED", *MailScore::Scanner::SYMBOLS.keys ], symbols.map { it["name"] }
   end
@@ -100,7 +100,7 @@ class MailScore::AppTest < MailScore::TestCase
     @app = MailScore::App.new(config, database: @database, rules: [ ExampleRule ])
     symbols = JSON.parse(get("/symbols").body)
 
-    assert_equal({ "name" => "EXAMPLE", "weight" => 2.0, "description" => "Fires on example mail", "group" => "hfilter" }, symbols.first)
+    assert_equal({ "name" => "EXAMPLE", "weight" => 2.0, "description" => "Fires on example mail", "group" => "hostname" }, symbols.first)
     assert_equal({ "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "Scan failed", "group" => "scan", "disabled" => true }, symbols.last)
   end
 
@@ -121,7 +121,7 @@ class MailScore::AppTest < MailScore::TestCase
   end
 
   def test_reputation_and_autolearn_read_the_capped_weights
-    settings = SETTINGS.merge("autolearn" => true, "autolearn_spam_score" => 1.2, "autolearn_ham_score" => -1, "groups" => { "hfilter" => { "max_score" => 1 } })
+    settings = SETTINGS.merge("autolearn" => true, "autolearn_spam_score" => 1.2, "autolearn_ham_score" => -1, "groups" => { "hostname" => { "max_score" => 1 } })
     @app = MailScore::App.new(MailScore::Config.parse(settings, env: TOKENS), database: @database, rules: [ ExampleRule ])
     check("Subject: an example\n\n#{WORDS}", "HTTP_IP" => "203.0.113.9")
 

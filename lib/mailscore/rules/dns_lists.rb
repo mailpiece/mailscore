@@ -4,16 +4,16 @@ module MailScore
     # what its checks find in the message and the session, unless it skips
     # the sender or its probe has it offline.
     # Lists that +is_whitelist+ are asked first, and what they allow the
-    # others are not asked about. Their symbols are in the rbl and surbl
+    # others are not asked about. Their symbols are in the dnsbl and uribl
     # groups.
     class DnsLists < Rule
       NAME = "DNS_LISTS"
-      GROUPS = { "dnsbl" => "rbl", "uribl" => "surbl" }.freeze
+      GROUPS = %w[ dnsbl uribl ].freeze
       SYMBOLS = {}.freeze
 
       def self.symbols(config)
-        GROUPS.each_with_object({}) do |(setting, group), symbols|
-          config.public_send(setting).each do |list|
+        GROUPS.each_with_object({}) do |group, symbols|
+          config.public_send(group).each do |list|
             list.symbols.each { |name, (weight, description)| symbols[name] = [ weight, description, group ] }
           end
         end
