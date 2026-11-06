@@ -3,7 +3,7 @@ module MailScore
     # One link and hardly any text around it.
     class UrlOnly < Rule
       NAME = "LINK_ONLY"
-      GROUP = "url"
+      GROUP = "hostname"
       WEIGHT = 2.2
       DESCRIPTION = "The message is only a link"
 

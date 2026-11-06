@@ -23,8 +23,11 @@ class MailScore::RulesTest < MailScore::TestCase
       MailScore::Rules.catalogue([ rule ])
   end
 
-  def test_link_only_and_bounce_many_recipients_are_in_their_neighbours_groups
-    assert_equal %w[ url headers ], [ MailScore::Rules::UrlOnly::GROUP, MailScore::Rules::RcptBounceMoreOne::GROUP ]
+  def test_link_only_and_bounce_many_recipients_are_in_a_group_with_no_cap
+    groups = MailScore::Config.parse(SETTINGS, env: TOKENS).groups
+
+    assert_nil groups[MailScore::Rules::UrlOnly::GROUP]
+    assert_nil groups[MailScore::Rules::RcptBounceMoreOne::GROUP]
   end
 
   def test_dns_lists_are_in_the_dnsbl_and_uribl_groups
