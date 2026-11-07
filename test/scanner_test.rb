@@ -404,6 +404,21 @@ class MailScore::ScannerTest < MailScore::TestCase
     assert_equal 8.0, verdict.score
   end
 
+  def test_a_disguised_program_is_not_capped_with_risky_names
+    pe = ("MZ".b + "\0" * 58 + [ 0x40 ].pack("V")).ljust(0x40, "\0") + "PE\0\0".b
+    raw = "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: application/octet-stream; name=setup.exe\n\nx\n" \
+      "--b\nContent-Type: application/pdf; name=invoice.pdf\nContent-Transfer-Encoding: base64\n\n#{[ pe ].pack("m")}--b--\n"
+    scan = ->(groups) do
+      config = MailScore::Config.parse(SETTINGS.merge("groups" => groups), env: TOKENS)
+      message = MailScore::Message.new(raw)
+      rules = [ MailScore::Rules::MimeBadExtension, MailScore::Rules::MimeDisguisedProgram ]
+      MailScore::Scanner.new(config, rules:, stats: @stats, database: @database).check(message, MailScore::Envelope.read({}, message)).hits.to_h { [ it.name, it.weight ] }
+    end
+
+    assert_equal({ "ATTACHMENT_RISKY_EXTENSION" => 2.0, "ATTACHMENT_DISGUISED_PROGRAM" => 12.0 }, scan.({}).slice("ATTACHMENT_RISKY_EXTENSION", "ATTACHMENT_DISGUISED_PROGRAM"))
+    assert_equal 5.0, scan.({ "programs" => { "max_score" => 5 } })["ATTACHMENT_DISGUISED_PROGRAM"]
+  end
+
   def test_a_score_for_an_unknown_symbol_fails
     error = assert_raises(MailScore::ConfigError) { check("FIVE", scores: { "FIVE" => 1, "SIX" => 6, "GREYLISTED" => 1 }) }
 

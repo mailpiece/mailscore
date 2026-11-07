@@ -5,7 +5,7 @@ module MailScore
     # invoice.pdf or a Java program named photos.zip.
     class MimeDisguisedProgram < Rule
       NAME = "ATTACHMENT_DISGUISED_PROGRAM"
-      GROUP = "mime_types"
+      GROUP = "programs"
       WEIGHT = 12.0
       DESCRIPTION = "Program attached under a harmless name"
 
@@ -22,15 +22,20 @@ module MailScore
       HEAD = 1024
 
       def run(message, _envelope)
-        message.content.attachments.each do |attachment|
-          kind = kind(attachment) if disguise?(attachment.extension)
-          return Hit.new(name: NAME, weight: WEIGHT, detail: "#{attachment.name} is #{kind}") if kind
-        end
+        attachment, kind = disguised(message.content.attachments)
 
-        nil
+        if attachment
+          Hit.new(name: NAME, weight: WEIGHT, detail: "#{attachment.name} is #{kind}")
+        end
       end
 
       private
+        # The first attachment that is a program under a harmless name, and
+        # its kind.
+        def disguised(attachments)
+          attachments.lazy.select { disguise?(it.extension) }.map { [ it, kind(it) ] }.find { |_, kind| kind }
+        end
+
         # A name with an extension, and not a risky one.
         def disguise?(extension)
           !extension.empty? && !@config.risky_extensions.include?(extension)
@@ -39,10 +44,14 @@ module MailScore
         def kind(attachment)
           head = Content.decode(attachment.part, HEAD).b
 
-          if head.bytesize < 4 then nil
-          elsif windows?(attachment, head) then "exe"
-          elsif head.start_with?(*ZIP) then zipped_program(attachment)
-          else MAGIC.find { |_, magics| head.start_with?(*magics) }&.first
+          if head.bytesize < 4
+            nil
+          elsif windows?(attachment, head)
+            "exe"
+          elsif head.start_with?(*ZIP)
+            zipped_program(attachment)
+          else
+            MAGIC.find { |_, magics| head.start_with?(*magics) }&.first
           end
         end
 
@@ -60,8 +69,10 @@ module MailScore
         def zipped_program(attachment)
           names = Content.zip_entries(Content.decode(attachment.part, Content::ARCHIVE_CAP))
 
-          if names.include?("AndroidManifest.xml") || names.include?("classes.dex") then "apk"
-          elsif names.include?("META-INF/MANIFEST.MF") && names.any? { it.end_with?(".class") } then "jar"
+          if names.include?("AndroidManifest.xml") || names.include?("classes.dex")
+            "apk"
+          elsif names.include?("META-INF/MANIFEST.MF") && names.any? { it.end_with?(".class") }
+            "jar"
           end
         end
     end
