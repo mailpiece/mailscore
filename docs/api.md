@@ -211,16 +211,6 @@ Some symbols the caller relies on:
 - Mail from local networks and authenticated senders skips SPF, DKIM, DMARC, the HELO and PTR checks, the DNS lists that say so and `BOUNCE_MANY_RECIPIENTS`; ARC, header and content rules still run.
 - DNS lists for the client IP and for the domains a message carries are off by default. Each one the config names fires its own symbols; see [DNS lists](dns-lists.md).
 
-These symbols weigh 0.0 by default: they show in `symbols` and the log without moving the score, until `scores` gives them a weight.
-
-| Symbol | Fires when |
-|---|---|
-| `PHP_SCRIPT_HEADER` | the message carries `X-PHP-Originating-Script` or `X-PHP-Script`, as a PHP script on a web server adds |
-| `PHP_SCRIPT_AS_ROOT` | `X-PHP-Originating-Script` names uid 0 |
-| `PHP_SCRIPT_EVAL` | either PHP header names eval'd code |
-| `SCRIPT_SOURCE_HEADER` | the message carries `X-Source`, `X-Source-Args` or `X-Source-Dir` |
-| `SCRIPT_HIDDEN_PATH` | the sending script's path, in a PHP header or `X-Source-Args`, has a hidden file or directory, such as `/.cache/`, not `/../` |
-
 `ATTACHMENT_RISKY_EXTENSION` (2.0) also fires, at 0.0 whatever `scores` gives it, for an attachment whose first bytes show a program of a kind on the `risky_extensions` list, under a name that is not, such as a Windows executable named `invoice.pdf`. The kinds are `exe` (an `MZ` header pointing at a `PE` signature), `lnk`, and, when the list names them, `elf`, `macho` and `class`.
 
 ## `POST /learn/spam`, `POST /learn/ham`

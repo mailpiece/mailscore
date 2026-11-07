@@ -19,7 +19,6 @@ require "mailscore/rules/invalid_date"
 require "mailscore/rules/date_in_future"
 require "mailscore/rules/date_in_past"
 require "mailscore/rules/subj_all_caps"
-require "mailscore/rules/compromised_host"
 require "mailscore/rules/authentication"
 require "mailscore/rules/http_to_ip"
 require "mailscore/rules/dns_lists"
@@ -67,7 +66,7 @@ module MailScore
       Bounce, RcptBounceMoreOne, Trap,
       Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown,
       MissingDate, MissingMid, MissingFrom, MissingTo, InvalidMsgid, MultipleFrom, MultipleUniqueHeaders,
-      InvalidDate, DateInFuture, DateInPast, SubjAllCaps, CompromisedHost,
+      InvalidDate, DateInFuture, DateInPast, SubjAllCaps,
       *CONTENT,
       FuzzyMatch,
       Authentication,

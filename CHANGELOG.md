@@ -3,7 +3,6 @@
 ## Unreleased
 
 - Groups renamed, `hfilter` to `hostname`, `rbl` to `dnsbl`, `surbl` to `uribl`, `neural` to `fasttext`: a `groups` setting naming an old one fails at boot as unknown
-- Five symbols at weight 0 flag the headers a hacked site's script leaves, such as `PHP_SCRIPT_AS_ROOT`
 - `ATTACHMENT_RISKY_EXTENSION` also fires, at weight 0, on a program attached under a harmless name, found by its first bytes
 - `SPAM_TEST_STRING` fires on the standard anti-spam test string and forces reject, whatever the score, while reject is on
 
