@@ -35,6 +35,8 @@ require "mailscore/rules/mime_base64_text_bogus"
 require "mailscore/rules/mime_bad_extension"
 require "mailscore/rules/mime_double_bad_extension"
 require "mailscore/rules/mime_archive_in_archive"
+require "mailscore/rules/mime_disguised_program"
+require "mailscore/rules/test_string"
 require "mailscore/rules/fuzzy_match"
 require "mailscore/rules/bayes"
 require "mailscore/rules/fasttext"
@@ -44,8 +46,8 @@ module MailScore
   # What a rule returns when it fires. A detail read from the message or
   # the session may carry any bytes, so a string one is kept as UTF-8,
   # scrubbed, for the JSON answer. +data+ is what the rule found for the
-  # code after it, such as the DKIM signers reputation reads, and never
-  # reaches the answer.
+  # code after it, such as the DKIM signers reputation reads, or the
+  # { action: } it forces, and never reaches the answer.
   Hit = Data.define(:name, :weight, :detail, :data) do
     def initialize(name:, weight:, detail: nil, data: nil)
       detail = detail.dup.force_encoding(Encoding::UTF_8).scrub if detail.is_a?(String)
@@ -60,7 +62,7 @@ module MailScore
   # and may return a list. +GROUP+ is the group its symbols are capped in.
   # +ALL+ is the catalogue `/symbols` lists and `/check` runs.
   module Rules
-    CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive ].freeze
+    CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive, MimeDisguisedProgram, TestString ].freeze
     ALL = [
       Bounce, RcptBounceMoreOne, Trap,
       Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown,

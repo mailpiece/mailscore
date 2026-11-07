@@ -79,6 +79,17 @@ class MailScore::ScannerTest < MailScore::TestCase
     end
   end
 
+  class ForcingRule < MailScore::Rule
+    NAME = "FORCING"
+    GROUP = "test"
+    WEIGHT = 0
+    DESCRIPTION = "Forces reject"
+
+    def run(message, _envelope)
+      MailScore::Hit.new(name: NAME, weight: WEIGHT, data: { action: "reject" }) if message.subject.to_s.include?(NAME)
+    end
+  end
+
   class Greylister
     def initialize(answer)
       @answer = answer
@@ -117,6 +128,15 @@ class MailScore::ScannerTest < MailScore::TestCase
 
     assert_equal "rewrite_subject", check("FIVE TEN", actions:).action
     assert_equal "no_action", check("FIVE", actions:).action
+  end
+
+  def test_a_hit_can_force_an_action_the_operator_left_on
+    verdict = check("FORCING MINUS", rules: [ ForcingRule, *RULES ], greylister: Greylister.new([ "soft_reject", nil ]))
+
+    assert_equal [ "reject", -0.1 ], [ verdict.action, verdict.score ]
+    assert_equal "no_action", check("FORCING", rules: [ ForcingRule ], actions: { "reject" => false }).action
+    assert_equal "add_header", check("FORCING FIVE TWO", rules: [ ForcingRule, *RULES ], actions: { "reject" => false }).action
+    assert_equal "no_action", check("FORCING", rules: [ ForcingRule ], scores: { "FORCING" => false }).action
   end
 
   def test_without_a_greylister_greylist_falls_to_no_action
@@ -382,6 +402,21 @@ class MailScore::ScannerTest < MailScore::TestCase
 
     assert_equal [ 6.0, 2.0 ], verdict.hits.map(&:weight)
     assert_equal 8.0, verdict.score
+  end
+
+  def test_a_disguised_program_is_not_capped_with_risky_names
+    pe = ("MZ".b + "\0" * 58 + [ 0x40 ].pack("V")).ljust(0x40, "\0") + "PE\0\0".b
+    raw = "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: application/octet-stream; name=setup.exe\n\nx\n" \
+      "--b\nContent-Type: application/pdf; name=invoice.pdf\nContent-Transfer-Encoding: base64\n\n#{[ pe ].pack("m")}--b--\n"
+    scan = ->(groups) do
+      config = MailScore::Config.parse(SETTINGS.merge("groups" => groups), env: TOKENS)
+      message = MailScore::Message.new(raw)
+      rules = [ MailScore::Rules::MimeBadExtension, MailScore::Rules::MimeDisguisedProgram ]
+      MailScore::Scanner.new(config, rules:, stats: @stats, database: @database).check(message, MailScore::Envelope.read({}, message)).hits.to_h { [ it.name, it.weight ] }
+    end
+
+    assert_equal({ "ATTACHMENT_RISKY_EXTENSION" => 2.0, "ATTACHMENT_DISGUISED_PROGRAM" => 12.0 }, scan.({}).slice("ATTACHMENT_RISKY_EXTENSION", "ATTACHMENT_DISGUISED_PROGRAM"))
+    assert_equal 5.0, scan.({ "programs" => { "max_score" => 5 } })["ATTACHMENT_DISGUISED_PROGRAM"]
   end
 
   def test_a_score_for_an_unknown_symbol_fails
