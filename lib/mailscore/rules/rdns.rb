@@ -2,22 +2,23 @@ module MailScore
   module Rules
     # Without a Hostname from the caller, or with only the address in
     # brackets, mailscore looks up the client's reverse DNS itself. No PTR
-    # record fires REVERSE_DNS_NONE; a lookup that got no answer in time
-    # fires REVERSE_DNS_LOOKUP_FAILED, which weighs nothing, and
-    # REVERSE_DNS_NONE too.
+    # record fires REVERSE_DNS_NONE. A lookup that failed, mailscore's or the
+    # caller's, says nothing either way: it fires only
+    # REVERSE_DNS_LOOKUP_FAILED. Both weigh nothing, so the verdict shows the
+    # outcome without scoring it.
     class Rdns < Rule
       NAME = "REVERSE_DNS"
       GROUP = "hostname"
 
       SYMBOLS = {
-        "REVERSE_DNS_NONE" => [ 2.0, "No reverse DNS for the sending server" ],
+        "REVERSE_DNS_NONE" => [ 0.0, "No reverse DNS for the sending server" ],
         "REVERSE_DNS_LOOKUP_FAILED" => [ 0.0, "Reverse DNS lookup failed" ]
       }.freeze
 
       def run(_message, envelope)
         case envelope.reverse_dns(resolver(envelope))&.status
         when "none" then [ hit("REVERSE_DNS_NONE", envelope.ip) ]
-        when "failed" then [ hit("REVERSE_DNS_LOOKUP_FAILED", envelope.ip), hit("REVERSE_DNS_NONE", envelope.ip) ]
+        when "failed" then [ hit("REVERSE_DNS_LOOKUP_FAILED", envelope.ip) ]
         else []
         end
       end

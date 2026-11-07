@@ -39,6 +39,8 @@ Request headers, all optional:
 | `IP` | client IP |
 | `Helo` | HELO or EHLO argument |
 | `Hostname` | the client's verified reverse DNS name, or, when it has none, `unknown` or its address in brackets, such as `[203.0.113.9]` |
+| `Reverse-DNS-Status` | how the caller's reverse DNS lookup went: `confirmed`, `unconfirmed`, `none` or `temporary_failure` |
+| `Unconfirmed-Hostname` | the name the client's PTR record gave when it did not resolve back to the client IP |
 | `From` | envelope sender, `<>` for a null sender |
 | `Rcpt` | one envelope recipient, repeated for each |
 | `Deliver-To` | the final delivery address, when the caller knows it |
@@ -50,7 +52,9 @@ Request headers, all optional:
 - `Rcpt` may be repeated or carry a comma-separated list.
 - Without `From` or `Rcpt`, mailscore reads the message's own `From` and `To`, which the sender writes as it likes. Traps, greylisting and the bounce checks then go by them, so a caller should always send the envelope it saw.
 - Without `IP`, checks that need the client IP do not fire.
-- Without `Hostname`, or with only the address in brackets, mailscore looks up the client IP's PTR record itself, within the scan budget, and takes the first name as the client's host name without checking it resolves back. No PTR record fires `REVERSE_DNS_NONE` (2.0) and `HOSTNAME_UNKNOWN`. A lookup with no answer in time fires `REVERSE_DNS_LOOKUP_FAILED` (0.0) and both of those. `unknown` fires `HOSTNAME_UNKNOWN` with no lookup. Local networks and authenticated senders are not looked up.
+- Without `Hostname`, or with only the address in brackets, mailscore looks up the client IP's PTR record itself, within the scan budget, and takes the first name as the client's host name without checking it resolves back. No PTR record fires `REVERSE_DNS_NONE` and `HOSTNAME_UNKNOWN`. A lookup that timed out or got a server failure says nothing either way and fires only `REVERSE_DNS_LOOKUP_FAILED`. `unknown` fires `HOSTNAME_UNKNOWN` with no lookup. All three weigh 0 by default, so reverse DNS shows in the verdict but adds nothing to the score unless `scores` gives it a weight. Local networks and authenticated senders are not looked up.
+- `Reverse-DNS-Status: temporary_failure` says the caller's own lookup timed out or got a server failure. mailscore does not look up again and fires only `REVERSE_DNS_LOOKUP_FAILED`, whatever `Hostname` says. A caller that skipped its lookup leaves the header out, so mailscore looks up itself. With `confirmed`, `unconfirmed` or `none`, `Hostname` alone says whether the client has a name; any value not listed is ignored.
+- `Unconfirmed-Hostname` is anyone's to claim, since whoever controls the client IP's reverse zone writes it. mailscore never takes it as the client's host name, so it never stands in for `Hostname`, never lowers a score and never passes a check. A value that is not a full host name, with at least one dot, only letters, digits and hyphens in its labels and at most 253 characters, is ignored.
 - mailscore runs SPF, DKIM, DMARC and ARC itself.
 
 Response, one verdict for the message:
@@ -60,7 +64,7 @@ Response, one verdict for the message:
   "action": "add header",
   "score": 7.1,
   "complete": true,
-  "symbols": [ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "detail": "203.0.113.9", "description": "Sending server has no verified host name" } ]
+  "symbols": [ { "name": "HELO_IP_ADDRESS", "weight": 3.0, "detail": "[203.0.113.9]", "description": "Server greeted with an IP address" } ]
 }
 ```
 
@@ -278,7 +282,7 @@ The flags are a setting, and these three are the default.
 - `ping`: no token. `200` and `pong` as plain text, for container health checks.
 - `health`: read token. `200` and `{"status": "ok", "version": "0.2.0"}` when the database opens. `503` otherwise.
 - `stats`: read token. Counters since start, such as scans per action, budget overruns, rule errors, scan errors, learns, autolearns and fuzzy matches. Never message content or addresses. Under `fasttext`, the model in place: its accuracy on held-out samples and the spam and ham samples it learned from, and the time of the last training, swapped in or not, as `{"trained_at": "2026-11-03T03:00:00Z", "accuracy": 0.97, "spam_samples": 4000, "ham_samples": 4000}`, with nulls before any.
-- `symbols`: read token. The rule catalogue, `[ { "name": "HOSTNAME_UNKNOWN", "weight": 2.5, "description": "Sending server has no verified host name", "group": "hostname" } ]`, each at the weight in use. A symbol `scores` switches off keeps its default weight and adds `"disabled": true`. A description is a short label, such as "No reverse DNS for the sending server".
+- `symbols`: read token. The rule catalogue, `[ { "name": "HELO_IP_ADDRESS", "weight": 3.0, "description": "Server greeted with an IP address", "group": "hostname" } ]`, each at the weight in use. A symbol `scores` switches off keeps its default weight and adds `"disabled": true`. A description is a short label, such as "No reverse DNS for the sending server".
 
 ## Errors
 
