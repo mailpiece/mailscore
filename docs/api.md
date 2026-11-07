@@ -201,6 +201,7 @@ Some symbols the caller relies on:
 - When SPF, DKIM, DMARC and ARC fail to run, `AUTHENTICATION_ERROR` (2.0) fires in place of all their symbols, so a message cannot shed an authentication failure by making the checks raise.
 - A DKIM signature whose `l=` leaves part of the body unsigned earns nothing: no `DKIM_PASS`, no DMARC alignment, no signer reputation and no DNS allow-list. Alone it fires `DKIM_PARTIAL_BODY` (0.5).
 - Bounces and mail from `<>` are scored like any other mail.
+- An attachment whose first bytes show a program, under a name with an extension not on the `risky_extensions` list, fires `ATTACHMENT_DISGUISED_PROGRAM` (12.0), such as a Windows executable named `invoice.pdf`. A program is a Windows executable (`MZ` and the `PE` signature its header points at), an ELF or Mach-O binary, a Java class, a Windows shortcut, a virtual hard disk, a script starting `#!`, or a zip holding an Android app or a Java program. It counts in `mime_types`, so the group's cap of 10 holds it to 10 by default.
 - The standard anti-spam test string, anywhere in the subject, the headers or a text or HTML part, fires `SPAM_TEST_STRING` (0.0) and forces `reject` whatever the score, for checking a filter end to end. `scores` switching the symbol off stops it, and with `reject` switched off in `actions` the score decides.
 - A DMARC `p=reject` failure only adds weight. It never forces a reject, but a spoof still reaches `greylist` past every credit a sender can earn for itself: SPF and DKIM passes for its own domain, its own ARC seal and a bounce.
 - When `pct` leaves a failure out of the sample, `p=reject` counts as `p=quarantine`.
@@ -210,8 +211,6 @@ Some symbols the caller relies on:
 - An SPF pass from a record that lets any client send, with `+all` or a bare `all` in it or in an `include` or `redirect` it read, fires `SPF_ALLOWS_ANYONE` at 4.0 instead of `SPF_PASS`. DMARC still counts it as a pass, but it gives the sender no SPF reputation.
 - Mail from local networks and authenticated senders skips SPF, DKIM, DMARC, the HELO and PTR checks, the DNS lists that say so and `BOUNCE_MANY_RECIPIENTS`; ARC, header and content rules still run.
 - DNS lists for the client IP and for the domains a message carries are off by default. Each one the config names fires its own symbols; see [DNS lists](dns-lists.md).
-
-`ATTACHMENT_RISKY_EXTENSION` (2.0) also fires, at 0.0 whatever `scores` gives it, for an attachment whose first bytes show a program of a kind on the `risky_extensions` list, under a name that is not, such as a Windows executable named `invoice.pdf`. The kinds are `exe` (an `MZ` header pointing at a `PE` signature), `lnk`, and, when the list names them, `elf`, `macho` and `class`.
 
 ## `POST /learn/spam`, `POST /learn/ham`
 

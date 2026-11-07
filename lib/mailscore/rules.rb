@@ -35,6 +35,7 @@ require "mailscore/rules/mime_base64_text_bogus"
 require "mailscore/rules/mime_bad_extension"
 require "mailscore/rules/mime_double_bad_extension"
 require "mailscore/rules/mime_archive_in_archive"
+require "mailscore/rules/mime_disguised_program"
 require "mailscore/rules/test_string"
 require "mailscore/rules/fuzzy_match"
 require "mailscore/rules/bayes"
@@ -61,7 +62,7 @@ module MailScore
   # and may return a list. +GROUP+ is the group its symbols are capped in.
   # +ALL+ is the catalogue `/symbols` lists and `/check` runs.
   module Rules
-    CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive, TestString ].freeze
+    CONTENT = [ HttpToIp, ZeroWidthSpaceUrl, UrlHomographAttack, FromHomograph, UrlOnly, RedirectorUrlOnly, Phishing, HtmlMetaRefreshUrl, HtmlForm, MimeHtmlOnly, MimeBase64TextBogus, MimeBadExtension, MimeDoubleBadExtension, MimeArchiveInArchive, MimeDisguisedProgram, TestString ].freeze
     ALL = [
       Bounce, RcptBounceMoreOne, Trap,
       Rdns, HeloBadIp, HeloBareIp, HeloNotFqdn, HeloNotHostname, HostnameUnknown,

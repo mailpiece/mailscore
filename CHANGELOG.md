@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Groups renamed, `hfilter` to `hostname`, `rbl` to `dnsbl`, `surbl` to `uribl`, `neural` to `fasttext`: a `groups` setting naming an old one fails at boot as unknown
-- `ATTACHMENT_RISKY_EXTENSION` also fires, at weight 0, on a program attached under a harmless name, found by its first bytes
+- `ATTACHMENT_DISGUISED_PROGRAM` (12.0) fires on a program attached under a harmless name, such as a Windows executable named `invoice.pdf`, found by its first bytes
 - `SPAM_TEST_STRING` fires on the standard anti-spam test string in the subject, headers or any text part, and forces reject, whatever the score, while reject is on
 
 ## 0.2.0
