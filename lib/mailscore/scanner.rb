@@ -25,9 +25,9 @@ module MailScore
   end
 
   # One scan: every rule within the budget, then the highest action whose
-  # threshold the score reaches, or the one a hit forces. The clock is read before each rule, and past
-  # the budget the rest are skipped with SCAN_TIMED_OUT, its detail the
-  # first rule skipped. A rule that raises counts as not fired, or fires its
+  # threshold the score reaches, or the one a hit forces. The clock is read
+  # before each rule, and past the budget the rest are skipped with
+  # SCAN_TIMED_OUT, its detail the first rule skipped. A rule that raises counts as not fired, or fires its
   # +ERROR+ symbol when it has one. The caps the
   # message reached fire after the rules, and reputation scores after them;
   # App records it after the verdict. A scan that raises gets the +failed+

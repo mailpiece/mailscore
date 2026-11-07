@@ -11,10 +11,19 @@ class MailScore::Rules::TestStringTest < MailScore::TestCase
     assert run_rule("Content-Type: text/html\n\n<p>#{STRING}</p>")
   end
 
-  def test_a_long_part_or_another_string
-    assert_nil run_rule("Subject: test\n\n#{"x" * 8192}\n#{STRING}\n")
+  def test_the_test_string_past_8_kb
+    assert run_rule("Subject: test\n\n#{"x" * 100_000}\n#{STRING}\n")
+  end
+
+  def test_the_test_string_in_the_headers
+    assert run_rule("Subject: #{STRING}\n\nbody")
+    assert run_rule("Subject: =?UTF-8?B?#{[ STRING ].pack("m0")}?=\n\nbody")
+    assert run_rule("X-Test: #{STRING}\n\nbody")
+  end
+
+  def test_another_string
     assert_nil run_rule("Subject: test\n\n#{STRING.sub("X", "Y")}\n")
-    assert_nil run_rule("Subject: #{STRING}\n\nbody")
+    assert_nil run_rule("Content-Type: application/octet-stream; name=a.bin\n\n#{STRING}\n")
   end
 
   private
