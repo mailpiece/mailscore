@@ -1,7 +1,8 @@
 module MailScore
   # What /check answers for one message. +action+ is a config action name or
   # "no_action". Each symbol carries its description from +descriptions+,
-  # name to description, as /symbols lists them.
+  # name to description, as /symbols lists them, and the headers are
+  # SpamHeaders under +thresholds+.
   Verdict = Data.define(:action, :score, :complete, :hits, :subject)
 
   class Verdict
@@ -10,9 +11,10 @@ module MailScore
       "reject" => { code: 554, enhanced: "5.7.1", text: "Spam message rejected" }
     }.freeze
 
-    def as_json(descriptions = {})
+    def as_json(descriptions = {}, thresholds = {})
       symbols = hits.map { { **it.to_h.except(:data), description: descriptions[it.name] }.compact }
-      { action: action.tr("_", " "), score: score, complete: complete, symbols: }.tap do |answer|
+      headers = SpamHeaders.new(self, thresholds).to_a
+      { action: action.tr("_", " "), score: score, complete: complete, symbols:, headers: }.tap do |answer|
         answer[:smtp_reply] = REPLIES[action] if REPLIES.key?(action)
         answer[:subject] = subject if action == "rewrite_subject"
       end

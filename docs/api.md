@@ -64,7 +64,17 @@ Response, one verdict for the message:
   "action": "add header",
   "score": 7.1,
   "complete": true,
-  "symbols": [ { "name": "HELO_IP_ADDRESS", "weight": 3.0, "detail": "[203.0.113.9]", "description": "Server greeted with an IP address" } ]
+  "symbols": [
+    { "name": "HELO_IP_ADDRESS", "weight": 3.0, "detail": "[203.0.113.9]", "description": "Server greeted with an IP address" },
+    { "name": "BAYES_SPAM", "weight": 4.1, "detail": "97.12%", "description": "Learned filter says spam" }
+  ],
+  "headers": [
+    [ "X-Spam-Flag", "YES" ],
+    [ "X-Spam-Score", "7.1" ],
+    [ "X-Spam-Level", "*******" ],
+    [ "X-Spam-Status", "Yes, score=7.1 required=6.0 tests=HELO_IP_ADDRESS,BAYES_SPAM" ],
+    [ "X-Spam-Action", "add header" ]
+  ]
 }
 ```
 
@@ -75,6 +85,14 @@ Response, one verdict for the message:
 - `complete` is false when the scan ran past its budget. See [Timeout](#timeout).
 - `smtp_reply` (`code`, `enhanced`, `text`) is present with `soft reject` and `reject`, and mailscore always sends one that is well formed: `code` is a 4xx with `soft reject` and a 5xx with `reject`, `enhanced` is `class.subject.detail` with the same class digit, and `text` is printable ASCII with no CR or LF, at most 200 characters. The caller uses its own reply for one that is not.
 - Greylisting and `soft reject` send `451`, `4.7.1` and "Try again later". `reject` sends `554`, `5.7.1` and "Spam message rejected".
+- `headers` lists the fields the caller adds to the message it hands on, as `[name, value]` pairs, in order, whatever the action. A value never carries a CR or an LF.
+  - `X-Spam-Flag` is `YES` for any action but `no action`, else `NO`.
+  - `X-Spam-Score` is the score with one decimal, such as `7.1` or `-0.5`.
+  - `X-Spam-Level` is one `*` per whole point, at most 50, and is left out below one point.
+  - `X-Spam-Status` is `Yes` or `No`, as the flag, then `score=`, `required=` and `tests=`. `required=` is the threshold of the lowest action switched on of `add header`, `rewrite subject` and `reject`, left out when none is on. `tests=` names the symbols that fired, in the order of `symbols`, or `none`.
+  - `X-Spam-Action` is the action, as `action` names it.
+
+  The caller prepends them to the message, after removing every `X-Spam-` field the message already has: the sender may write any of them, and only the receiving server's verdict may claim that name.
 - `subject` is present with `rewrite subject`: the new Subject, the template around the message' Subject with its MIME encoded words decoded. When it is not all printable ASCII, it is sent as UTF-8 encoded words, so it never carries a CR, an LF or raw 8-bit text.
 
 `/check` has this one shape. Other response shapes, or a milter front for MTAs that speak milter, can be added later under new names, without changing `/check`.
@@ -88,7 +106,7 @@ With greylisting on, any score at or above the greylist threshold and below reje
 | Action | Caller does |
 |---|---|
 | `no action` | accept |
-| `add header` | accept, marked as spam, such as with `X-Spam: Yes` |
+| `add header` | accept, marked as spam by `headers` |
 | `rewrite subject` | accept, with its Subject set to `subject` |
 | `soft reject` | reply with `smtp_reply`, a 4xx |
 | `reject` | reply with `smtp_reply`, a 5xx |

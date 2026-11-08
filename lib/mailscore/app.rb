@@ -72,14 +72,14 @@ module MailScore
       # class alone, as the message may be in its text.
       def scan(message, envelope)
         verdict = @scanner.check(message, envelope)
-        [ verdict, JSON.generate(verdict.as_json(@descriptions)) ]
+        [ verdict, JSON.generate(verdict.as_json(@descriptions, @config.thresholds)) ]
       rescue SQLite3::Exception
         raise
       rescue StandardError => error
         @stats.increment("scan_errors")
         MailScore.logger.error "scan raised #{error.class} queue_id=#{MailScore.log_field(envelope.queue_id)}"
         verdict = @scanner.failed(message)
-        [ verdict, JSON.generate(verdict.as_json(@descriptions)) ]
+        [ verdict, JSON.generate(verdict.as_json(@descriptions, @config.thresholds)) ]
       end
 
       # What waits for the verdict, so a message never scores itself. None of
