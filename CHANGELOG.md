@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 
 - `/check` returns `headers`, the `X-Spam-` fields a caller adds to the message it hands on
 

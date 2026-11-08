@@ -19,7 +19,7 @@ GIT
 PATH
   remote: .
   specs:
-    mailscore (0.3.0)
+    mailscore (0.4.0)
       fasttext
       homographic_spoofing (~> 0.2)
       logger
@@ -197,7 +197,7 @@ CHECKSUMS
   mail (2.9.1) sha256=06574eca475253d6c18145dd70af80d0eb970182d55053497c5f4d797ea160e8
   mailauth (0.6.0)
   mailresolver (0.6.0)
-  mailscore (0.3.0)
+  mailscore (0.4.0)
   maxmind-db (1.5.0) sha256=b5345013d8b66bbf1ae7919bfeb631c9aeff1a901fa359dc931e78a9a7aefa37
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1

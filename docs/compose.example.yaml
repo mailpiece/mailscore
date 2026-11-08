@@ -1,6 +1,6 @@
 services:
   mailscore:
-    image: ghcr.io/mailpiece/mailscore:0.3.0
+    image: ghcr.io/mailpiece/mailscore:0.4.0
     depends_on:
       - unbound
     environment:
