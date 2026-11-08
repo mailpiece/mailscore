@@ -282,7 +282,7 @@ The flags are a setting, and these three are the default.
 ## `GET /ping`, `/health`, `/stats`, `/symbols`
 
 - `ping`: no token. `200` and `pong` as plain text, for container health checks.
-- `health`: read token. `200` and `{"status": "ok", "version": "0.2.0"}` when the database opens. `503` otherwise.
+- `health`: read token. `200` and `{"status": "ok", "version": "0.3.0"}` when the database opens. `503` otherwise.
 - `stats`: read token. Counters since start, such as scans per action, budget overruns, rule errors, scan errors, learns, autolearns and fuzzy matches. Never message content or addresses. Under `fasttext`, the model in place: its accuracy on held-out samples and the spam and ham samples it learned from, and the time of the last training, swapped in or not, as `{"trained_at": "2026-11-03T03:00:00Z", "accuracy": 0.97, "spam_samples": 4000, "ham_samples": 4000}`, with nulls before any.
 - `symbols`: read token. The rule catalogue, `[ { "name": "HELO_IP_ADDRESS", "weight": 3.0, "description": "Server greeted with an IP address", "group": "hostname" } ]`, each at the weight in use. A symbol `scores` switches off keeps its default weight and adds `"disabled": true`. A description is a short label, such as "No reverse DNS for the sending server".
 
