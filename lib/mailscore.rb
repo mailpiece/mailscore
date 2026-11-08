@@ -17,6 +17,7 @@ require "mailscore/origin"
 require "mailscore/reputation"
 require "mailscore/fuzzy"
 require "mailscore/trap"
+require "mailscore/spam_headers"
 require "mailscore/scanner"
 require "mailscore/app"
 

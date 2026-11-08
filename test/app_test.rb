@@ -165,7 +165,9 @@ class MailScore::AppTest < MailScore::TestCase
 
     assert_equal 200, response.status
     assert_equal({ "action" => "no action", "score" => 1.5, "complete" => true,
-      "symbols" => [ { "name" => "EXAMPLE", "weight" => 1.5, "detail" => "<> to a@example.net b@example.net", "description" => "Fires on example mail" } ] },
+      "symbols" => [ { "name" => "EXAMPLE", "weight" => 1.5, "detail" => "<> to a@example.net b@example.net", "description" => "Fires on example mail" } ],
+      "headers" => [ [ "X-Spam-Flag", "NO" ], [ "X-Spam-Score", "1.5" ], [ "X-Spam-Level", "*" ],
+        [ "X-Spam-Status", "No, score=1.5 required=6.0 tests=EXAMPLE" ], [ "X-Spam-Action", "no action" ] ] },
       JSON.parse(response.body))
     assert_equal 1, JSON.parse(get("/stats").body)["scans_no_action"]
   end
@@ -383,7 +385,8 @@ class MailScore::AppTest < MailScore::TestCase
 
     assert_equal 200, response.status
     assert_equal({ "action" => "no action", "score" => 3.0, "complete" => false, "symbols" => [ { "name" => "SCAN_ERROR", "weight" => 3.0, "description" => "Scan failed" } ] },
-      JSON.parse(response.body))
+      JSON.parse(response.body).except("headers"))
+    assert_includes JSON.parse(response.body)["headers"], [ "X-Spam-Status", "No, score=3.0 required=6.0 tests=SCAN_ERROR" ]
     assert_match "ERROR -- : scan raised ArgumentError queue_id=4Xk2Lq0Rz9", log
     refute_match "secret", log
     assert_equal 1, JSON.parse(get("/stats").body)["scan_errors"]

@@ -237,7 +237,9 @@ class MailScore::ScannerTest < MailScore::TestCase
   def test_the_answer_shape
     answer = check("FIVE TWO").as_json
 
-    assert_equal({ action: "add header", score: 7.0, complete: true, symbols: [ { name: "FIVE", weight: 5 }, { name: "TWO", weight: 2 } ] }, answer)
+    assert_equal({ action: "add header", score: 7.0, complete: true, symbols: [ { name: "FIVE", weight: 5 }, { name: "TWO", weight: 2 } ],
+      headers: [ [ "X-Spam-Flag", "YES" ], [ "X-Spam-Score", "7.0" ], [ "X-Spam-Level", "*******" ],
+        [ "X-Spam-Status", "Yes, score=7.0 tests=FIVE,TWO" ], [ "X-Spam-Action", "add header" ] ] }, answer)
   end
 
   def test_past_the_budget_the_answer_has_the_hits_so_far
