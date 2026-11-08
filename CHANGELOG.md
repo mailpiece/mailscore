@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - A reverse DNS lookup that failed, mailscore's or the caller's (`Reverse-DNS-Status: temporary_failure`), fires only `REVERSE_DNS_LOOKUP_FAILED`, not a missing name
 - `Unconfirmed-Hostname` takes the PTR name that did not resolve back, never trusted as the client's name
