@@ -308,7 +308,7 @@ module MailScore
         end
 
         def addresses(value, key)
-          raise ConfigError, "#{key} must be a list of addresses" unless value.is_a?(Array) && value.all? { it.is_a?(String) && it.include?("@") }
+          raise ConfigError, "#{key} must be a list of addresses or @domains" unless value.is_a?(Array) && value.all? { it.is_a?(String) && it.match?(/@[^@\s]+\z/) }
           value.map(&:downcase)
         end
 

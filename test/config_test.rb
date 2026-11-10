@@ -381,16 +381,21 @@ class MailScore::ConfigTest < MailScore::TestCase
   end
 
   def test_traps_can_be_set
-    config = parse(SETTINGS.merge("trap_addresses" => [ "Trap@Example.net" ], "trap_fuzzy_flag" => "spam", "trap_learn_spam" => true,
+    config = parse(SETTINGS.merge("trap_addresses" => [ "Trap@Example.net", "@Example.org" ], "trap_fuzzy_flag" => "spam", "trap_learn_spam" => true,
       "trap_allow_multiple_rcpts" => true))
 
-    assert_equal [ [ "trap@example.net" ], "spam", true, true ],
+    assert_equal [ [ "trap@example.net", "@example.org" ], "spam", true, true ],
       config.to_h.values_at(:trap_addresses, :trap_fuzzy_flag, :trap_learn_spam, :trap_allow_multiple_rcpts)
   end
 
   def test_trap_settings_are_checked
-    assert_equal "trap_addresses must be a list of addresses", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => "trap@example.net")) }.message
+    assert_equal "trap_addresses must be a list of addresses or @domains", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => "trap@example.net")) }.message
     assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => [ "trap" ])) }
+    assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => [ "@" ])) }
+    assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => [ "trap@" ])) }
+    assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => [ "@ " ])) }
+    assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => [ "trap@ " ])) }
+    assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_addresses" => [ "trap@example.net " ])) }
     assert_equal "trap_fuzzy_flag must be a fuzzy flag or off", assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_fuzzy_flag" => "phish")) }.message
     assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_fuzzy_flag" => true)) }
     assert_raises(MailScore::ConfigError) { parse(SETTINGS.merge("trap_learn_spam" => "yes")) }
