@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.1
 
 - A `trap_addresses` entry `@example.net` traps every address at that domain
 
