@@ -23,6 +23,34 @@ class MailScore::TrapTest < MailScore::TestCase
     assert_empty symbols(app, rcpt: "<bob@example.net>")
   end
 
+  def test_a_domain_entry_traps_every_address_at_that_domain_only
+    app = app(TRAPPING.merge("trap_addresses" => [ "@Example.org" ]))
+
+    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" } ], symbols(app, rcpt: "<anyone@example.org>")
+    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" } ], symbols(app, rcpt: "<Bob@Example.ORG>")
+    assert_empty symbols(app, rcpt: "<bob@sub.example.org>")
+    assert_empty symbols(app, rcpt: "<bob@example.net>")
+    assert_equal 2, stats(app)["trap_hits"]
+  end
+
+  def test_addresses_and_domain_entries_share_the_list
+    app = app(TRAPPING.merge("trap_addresses" => [ "trap@example.net", "@example.org" ]))
+
+    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" } ], symbols(app, rcpt: "<trap@example.net>")
+    assert_equal 1, stats(app)["trap_hits"]
+    assert_equal [ { "name" => "SENT_TO_TRAP", "weight" => 10.0, "description" => "Sent to a trap address" } ], symbols(app, rcpt: "<anyone@example.org>")
+    assert_equal 2, stats(app)["trap_hits"]
+    assert_empty symbols(app, rcpt: "<bob@example.net>")
+  end
+
+  def test_a_domain_entry_beside_other_recipients_is_left_alone
+    app = app(TRAPPING.merge("trap_addresses" => [ "@example.org" ]))
+
+    assert_empty symbols(app, rcpt: "<bob@example.net>, <anyone@example.org>")
+    assert_empty @database.execute("SELECT * FROM fuzzy_hashes")
+    assert_equal 0, stats(app)["trap_hits"]
+  end
+
   def test_mail_to_a_trap_adds_its_fuzzy_hashes_ten_times_and_is_learned_as_spam
     check(app(TRAPPING), rcpt: "<Trap@example.net>")
 

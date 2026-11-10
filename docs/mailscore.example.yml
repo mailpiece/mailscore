@@ -55,7 +55,7 @@
 # fuzzy_min_words: 64               # words a text part needs for shingles
 # fuzzy_threshold: 0.5              # share of shingles a match must exceed
 # fuzzy_min_attachment_size: 1024   # bytes a part needs to be hashed, a short text a quarter
-# trap_addresses: [ trap@example.com ] # none by default, addresses only spammers write to
+# trap_addresses: [ trap@example.com, "@example.net" ] # none by default, addresses or @domains only spammers write to
 # trap_fuzzy_flag: off              # a fuzzy flag to add trapped mail under
 # trap_fuzzy_weight: 10             # reports each trapped message adds to its hashes
 # trap_learn_spam: off              # learn trapped mail as spam

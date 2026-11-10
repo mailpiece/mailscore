@@ -265,6 +265,7 @@ Trap addresses are a setting, off by default. When on, mail to a trap can:
 Each is a separate switch, off by default. Both skip mail from local networks and authenticated senders.
 
 - A trap acts only when it is the message's sole recipient. Mail to a trap and other recipients is left alone: no `SENT_TO_TRAP`, no `trap_hits`, no hashes and no learning. A switch, off by default, lets a trap act beside other recipients too.
+- A `trap_addresses` entry `@example.net` traps every address at that domain, not its subdomains.
 - A recipient matches a trap address in any case. Both run after the verdict, so the message never scores itself; a message already learned as spam is fine.
 - Mail to a trap fires `SENT_TO_TRAP`, weight 10.0, in `/check`, without naming the address. Only spammers write to traps, but an old address turned trap still gets the odd stray, and with the switch on a trap can share a message with real recipients, so it stays below the suggested reject threshold of 15.
 - `/stats` counts `trap_hits`.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A `trap_addresses` entry `@example.net` traps every address at that domain
+
 ## 0.4.0
 
 - `/check` returns `headers`, the `X-Spam-` fields a caller adds to the message it hands on
